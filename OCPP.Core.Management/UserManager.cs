@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OCPP.Core - https://github.com/dallmann-consulting/OCPP.Core
  * Copyright (C) 2020-2025 dallmann consulting GmbH.
  * All Rights Reserved.
@@ -21,10 +21,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using OCPP.Core.Database;
 using OCPP.Core.Management.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -36,16 +38,19 @@ namespace OCPP.Core.Management
     public class UserManager : IUserManager
     {
         private OCPPCoreContext _dbContext;
+        private IConfiguration _configuration;
 
-        public UserManager(OCPPCoreContext dbContext)
+        public UserManager(OCPPCoreContext dbContext, IConfiguration configuration)
         {
             _dbContext = dbContext;
+            _configuration = configuration;
         }
 
         public async Task SignIn(HttpContext httpContext, UserModel user, bool isPersistent = false)
         {
             try
             {
+                await EnsureBootstrapUsersAsync();
                 User dbUser = await _dbContext.Users.FirstOrDefaultAsync(dbUser => dbUser.Username == user.Username);
                 if (dbUser != null && dbUser.Password == user.Password)
                 {
@@ -74,6 +79,42 @@ namespace OCPP.Core.Management
             }
         }
 
+        private async Task EnsureBootstrapUsersAsync()
+        {
+            if (await _dbContext.Users.AnyAsync())
+            {
+                return;
+            }
+
+            List<ConfigUser> configUsers = _configuration.GetSection("Users").Get<List<ConfigUser>>();
+            if (configUsers == null || configUsers.Count == 0)
+            {
+                return;
+            }
+
+            List<User> bootstrapUsers = configUsers
+                .Where(user => !string.IsNullOrWhiteSpace(user.Username))
+                .Where(user => !string.IsNullOrWhiteSpace(user.Password))
+                .GroupBy(user => user.Username, StringComparer.InvariantCultureIgnoreCase)
+                .Select(group => group.First())
+                .Select(user => new User
+                {
+                    Username = user.Username.Trim(),
+                    Password = user.Password,
+                    IsAdmin = user.Administrator
+                })
+                .ToList();
+
+            if (bootstrapUsers.Count == 0)
+            {
+                return;
+            }
+
+            _dbContext.Users.AddRange(bootstrapUsers);
+            await _dbContext.SaveChangesAsync();
+            WriteMessageLog("UserBootstrap", $"Seeded {bootstrapUsers.Count} user(s) from configuration.");
+        }
+
         public async Task SignOut(HttpContext httpContext)
         {
             WriteMessageLog("Logout", $"User '{httpContext.User?.Identity?.Name}'");
@@ -99,6 +140,15 @@ namespace OCPP.Core.Management
                 claims.Add(new Claim(ClaimTypes.Role, Constants.AdminRoleName));
             }
             return claims;
+        }
+
+        private class ConfigUser
+        {
+            public string Username { get; set; }
+
+            public string Password { get; set; }
+
+            public bool Administrator { get; set; }
         }
 
         private void WriteMessageLog(string message, string result)
