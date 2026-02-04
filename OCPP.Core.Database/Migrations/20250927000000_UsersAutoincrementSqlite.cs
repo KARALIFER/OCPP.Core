@@ -24,7 +24,8 @@ DROP TABLE ""Users"";
 ALTER TABLE ""Users_temp"" RENAME TO ""Users"";
 CREATE UNIQUE INDEX ""IX_Users_Username"" ON ""Users"" (""Username"");
 PRAGMA foreign_keys=ON;
-");
+",
+                    suppressTransaction: true);
             }
         }
 
@@ -47,7 +48,8 @@ DROP TABLE ""Users"";
 ALTER TABLE ""Users_temp"" RENAME TO ""Users"";
 CREATE UNIQUE INDEX ""IX_Users_Username"" ON ""Users"" (""Username"");
 PRAGMA foreign_keys=ON;
-");
+",
+                    suppressTransaction: true);
             }
         }
     }
