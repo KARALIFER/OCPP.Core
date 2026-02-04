@@ -138,6 +138,9 @@ namespace OCPP.Core.Database
             {
                 entity.ToTable("Users");
 
+                entity.Property(e => e.UserId)
+                    .ValueGeneratedOnAdd();
+
                 entity.HasIndex(e => e.Username)
                     .IsUnique();
 
