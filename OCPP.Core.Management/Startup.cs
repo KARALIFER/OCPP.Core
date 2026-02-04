@@ -137,10 +137,6 @@ namespace OCPP.Core.Management
 
             bool isSqlite = dbContext.Database.IsSqlite();
             int nextUserId = 1;
-            if (isSqlite && dbContext.Users.Any())
-            {
-                nextUserId = dbContext.Users.Max(user => user.UserId) + 1;
-            }
 
             var userConfigs = Configuration.GetSection("Users").GetChildren();
             foreach (var userConfig in userConfigs)
@@ -154,24 +150,32 @@ namespace OCPP.Core.Management
                     continue;
                 }
 
-                var user = new User
-                {
-                    Username = username,
-                    Password = password,
-                    IsAdmin = isAdmin
-                };
                 if (isSqlite)
                 {
-                    user.UserId = nextUserId;
+                    int userId = nextUserId;
                     nextUserId += 1;
+                    dbContext.Database.ExecuteSqlInterpolated($"""
+                        INSERT INTO "Users" ("UserId", "Username", "Password", "IsAdmin")
+                        VALUES ({userId}, {username}, {password}, {isAdmin})
+                        """);
                 }
-
-                dbContext.Users.Add(user);
+                else
+                {
+                    dbContext.Users.Add(new User
+                    {
+                        Username = username,
+                        Password = password,
+                        IsAdmin = isAdmin
+                    });
+                }
             }
 
             try
             {
-                dbContext.SaveChanges();
+                if (!isSqlite)
+                {
+                    dbContext.SaveChanges();
+                }
             }
             catch (Exception ex)
             {
