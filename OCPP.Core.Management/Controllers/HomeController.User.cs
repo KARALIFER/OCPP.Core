@@ -77,12 +77,23 @@ namespace OCPP.Core.Management.Controllers
 
                         if (string.IsNullOrEmpty(errorMsg))
                         {
+                            bool useExplicitIds = DbContext.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+                            int nextUserId = 1;
+                            if (useExplicitIds)
+                            {
+                                nextUserId = (dbUsers.Max(user => (int?)user.UserId) ?? 0) + 1;
+                            }
+
                             User newUser = new User
                             {
                                 Username = uvm.Username,
                                 Password = uvm.Password,
                                 IsAdmin = uvm.IsAdmin
                             };
+                            if (useExplicitIds)
+                            {
+                                newUser.UserId = nextUserId;
+                            }
                             DbContext.Users.Add(newUser);
                             DbContext.SaveChanges();
 
