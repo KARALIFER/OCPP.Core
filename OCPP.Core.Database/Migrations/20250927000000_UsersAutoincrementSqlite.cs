@@ -10,8 +10,8 @@ namespace OCPP.Core.Database.Migrations
         {
             if (migrationBuilder.ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite")
             {
+                migrationBuilder.Sql("PRAGMA foreign_keys=OFF;", suppressTransaction: true);
                 migrationBuilder.Sql(@"
-PRAGMA foreign_keys=OFF;
 CREATE TABLE ""Users_temp"" (
     ""UserId"" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     ""Username"" TEXT NOT NULL,
@@ -23,8 +23,9 @@ SELECT ""UserId"", ""Username"", ""Password"", ""IsAdmin"" FROM ""Users"";
 DROP TABLE ""Users"";
 ALTER TABLE ""Users_temp"" RENAME TO ""Users"";
 CREATE UNIQUE INDEX ""IX_Users_Username"" ON ""Users"" (""Username"");
-PRAGMA foreign_keys=ON;
-");
+",
+                    suppressTransaction: true);
+                migrationBuilder.Sql("PRAGMA foreign_keys=ON;", suppressTransaction: true);
             }
         }
 
@@ -32,8 +33,8 @@ PRAGMA foreign_keys=ON;
         {
             if (migrationBuilder.ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite")
             {
+                migrationBuilder.Sql("PRAGMA foreign_keys=OFF;", suppressTransaction: true);
                 migrationBuilder.Sql(@"
-PRAGMA foreign_keys=OFF;
 CREATE TABLE ""Users_temp"" (
     ""UserId"" INTEGER NOT NULL,
     ""Username"" TEXT NOT NULL,
@@ -46,8 +47,9 @@ SELECT ""UserId"", ""Username"", ""Password"", ""IsAdmin"" FROM ""Users"";
 DROP TABLE ""Users"";
 ALTER TABLE ""Users_temp"" RENAME TO ""Users"";
 CREATE UNIQUE INDEX ""IX_Users_Username"" ON ""Users"" (""Username"");
-PRAGMA foreign_keys=ON;
-");
+",
+                    suppressTransaction: true);
+                migrationBuilder.Sql("PRAGMA foreign_keys=ON;", suppressTransaction: true);
             }
         }
     }
