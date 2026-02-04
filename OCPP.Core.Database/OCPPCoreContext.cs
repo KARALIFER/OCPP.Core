@@ -138,6 +138,10 @@ namespace OCPP.Core.Database
             {
                 entity.ToTable("Users");
 
+                entity.Property(e => e.UserId)
+                    .ValueGeneratedOnAdd()
+                    .HasAnnotation("Sqlite:Autoincrement", true);
+
                 entity.HasIndex(e => e.Username)
                     .IsUnique();
 

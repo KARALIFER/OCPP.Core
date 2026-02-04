@@ -136,6 +136,12 @@ namespace OCPP.Core.Management
             }
 
             var userConfigs = Configuration.GetSection("Users").GetChildren();
+            bool useExplicitIds = dbContext.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+            int nextUserId = 1;
+            if (useExplicitIds)
+            {
+                nextUserId = (dbContext.Users.Max(user => (int?)user.UserId) ?? 0) + 1;
+            }
             foreach (var userConfig in userConfigs)
             {
                 string username = userConfig.GetValue<string>("Username");
@@ -147,12 +153,19 @@ namespace OCPP.Core.Management
                     continue;
                 }
 
-                dbContext.Users.Add(new User
+                var user = new User
                 {
                     Username = username,
                     Password = password,
                     IsAdmin = isAdmin
-                });
+                };
+
+                if (useExplicitIds)
+                {
+                    user.UserId = nextUserId++;
+                }
+
+                dbContext.Users.Add(user);
             }
 
             dbContext.SaveChanges();
