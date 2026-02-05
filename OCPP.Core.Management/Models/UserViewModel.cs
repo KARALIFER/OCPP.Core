@@ -34,6 +34,8 @@ namespace OCPP.Core.Management.Models
 
         public List<User> Users { get; set; }
 
+        public Dictionary<int, string> UserChargeTagNames { get; set; }
+
         public List<UserChargeTagAssignmentViewModel> ChargeTags { get; set; }
 
         public List<UserChargePointAssignmentViewModel> ChargePoints { get; set; }

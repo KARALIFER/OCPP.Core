@@ -132,6 +132,9 @@
   <data name="UserList" xml:space="preserve">
     <value>Users</value>
   </data>
+  <data name="ChargeTagLabel" xml:space="preserve">
+    <value>Charge-Tag</value>
+  </data>
   <data name="UserNameLabel" xml:space="preserve">
     <value>Username</value>
   </data>

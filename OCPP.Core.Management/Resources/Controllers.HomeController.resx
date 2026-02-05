@@ -147,6 +147,12 @@
   <data name="ChargeTagIdRequired" xml:space="preserve">
     <value>Please enter an RFID number.</value>
   </data>
+  <data name="ChargeTagAlreadyAssigned" xml:space="preserve">
+    <value>RFID tag is already assigned.</value>
+  </data>
+  <data name="UserAlreadyHasChargeTag" xml:space="preserve">
+    <value>User already has an RFID tag.</value>
+  </data>
   <data name="Connector" xml:space="preserve">
     <value>Connector</value>
   </data>

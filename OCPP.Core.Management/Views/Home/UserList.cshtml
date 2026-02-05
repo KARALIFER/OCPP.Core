@@ -12,6 +12,7 @@
     <thead>
         <tr>
             <th>@Localizer["UserNameLabel"]</th>
+            <th>@Localizer["ChargeTagLabel"]</th>
             <th>@Localizer["UserIsAdminLabel"]</th>
         </tr>
     </thead>
@@ -22,6 +23,7 @@
             {
                 <tr class="table-row" data-href='@Url.Action("User", Constants.HomeController, new { id = user.UserId })'>
                     <td>@user.Username</td>
+                    <td>@(Model.UserChargeTagNames != null && Model.UserChargeTagNames.TryGetValue(user.UserId, out string tagLabel) ? tagLabel : string.Empty)</td>
                     <td>@(user.IsAdmin ? Localizer["Yes"] : Localizer["No"])</td>
                 </tr>
             }

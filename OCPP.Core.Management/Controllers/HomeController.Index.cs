@@ -59,6 +59,7 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
                 HashSet<string> hiddenChargePointIds = GetHiddenChargePointIds();
                 Dictionary<string, ChargePointStatus> dictOnlineStatus = new Dictionary<string, ChargePointStatus>();
                 #region Load online status from OCPP server
@@ -263,6 +264,7 @@ namespace OCPP.Core.Management.Controllers
                                     {
                                         cpovm.MeterStart = connStatus.MeterStart.Value;
                                         cpovm.MeterStop = connStatus.MeterStop;
+                                        cpovm.LastMeter = connStatus.LastMeter;
                                         cpovm.StartTime = connStatus.StartTime;
                                         cpovm.StopTime = connStatus.StopTime;
 
@@ -276,6 +278,7 @@ namespace OCPP.Core.Management.Controllers
                                     {
                                         cpovm.MeterStart = -1;
                                         cpovm.MeterStop = -1;
+                                        cpovm.LastMeter = null;
                                         cpovm.StartTime = null;
                                         cpovm.StopTime = null;
 
@@ -284,6 +287,13 @@ namespace OCPP.Core.Management.Controllers
                                             // default status: Available
                                             cpovm.ConnectorStatus = ConnectorStatusEnum.Available;
                                         }
+                                    }
+
+                                    bool isOwnChargeSession = permittedChargeTagIds == null;
+                                    if (!isOwnChargeSession &&
+                                        !string.IsNullOrWhiteSpace(connStatus.StartTagId))
+                                    {
+                                        isOwnChargeSession = permittedChargeTagIds.Contains(connStatus.StartTagId);
                                     }
 
                                     // Add current charge data to view model
@@ -308,10 +318,21 @@ namespace OCPP.Core.Management.Controllers
                                         }
                                     }
 
+                                    if (cpovm.ConnectorStatus == ConnectorStatusEnum.Occupied && !isOwnChargeSession)
+                                    {
+                                        cpovm.MeterStart = -1;
+                                        cpovm.MeterStop = -1;
+                                        cpovm.LastMeter = null;
+                                        cpovm.StartTime = null;
+                                        cpovm.StopTime = null;
+                                        cpovm.CurrentChargeData = null;
+                                    }
+
                                     if (!isPermittedChargePoint)
                                     {
                                         cpovm.MeterStart = -1;
                                         cpovm.MeterStop = -1;
+                                        cpovm.LastMeter = null;
                                         cpovm.StartTime = null;
                                         cpovm.StopTime = null;
                                         cpovm.CurrentChargeData = null;
