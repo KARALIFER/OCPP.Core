@@ -147,6 +147,9 @@
   <data name="NoChargePointsAvailable" xml:space="preserve">
     <value>No charge points available.</value>
   </data>
+  <data name="NoChargeTagAssigned" xml:space="preserve">
+    <value>No RFID tag assigned</value>
+  </data>
   <data name="RequiredField" xml:space="preserve">
     <value>Required</value>
   </data>

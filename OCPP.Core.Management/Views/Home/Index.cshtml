@@ -57,13 +57,41 @@
             }
 
             <div class="card border-secondary" style="max-width: 18rem;">
-                <a href="~/Home/Transactions/@Uri.EscapeDataString(cpvm.ChargePointId)/@cpvm.ConnectorId" class="text-decoration-none">
+                @if (cpvm.CanNavigate)
+                {
+                    <a href="~/Home/Transactions/@Uri.EscapeDataString(cpvm.ChargePointId)/@cpvm.ConnectorId" class="text-decoration-none">
+                        <div class="card-header @cpColor">
+                            <i class="fas @cpIcon fa-2x"></i> @chargePointName
+                        </div>
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">@cpTitle</h5>
+                            <p class="card-text">@(!string.IsNullOrEmpty(chargeDetails) ? chargeDetails : "\u00a0")</p>
+                        </div>
+                        @if (Model.ServerConnection)
+                        {
+                            <div class="card-footer text-muted d-flex justify-content-between">
+                                <div>@cpvm.CurrentChargeData</div>
+                                @if (cpvm.Online)
+                                {
+                                    <div><i class="fas fa-link" title="@Localizer["ChargePointOnline"]"></i></div>
+                                }
+                                else
+                                {
+                                    <div><i class="fas fa-unlink" title="@Localizer["ChargePointOffline"]"></i></div>
+                                }
+                            </div>
+                        }
+                    </a>
+                }
+                else
+                {
                     <div class="card-header @cpColor">
                         <i class="fas @cpIcon fa-2x"></i> @chargePointName
                     </div>
                     <div class="card-body text-secondary">
                         <h5 class="card-title">@cpTitle</h5>
                         <p class="card-text">@(!string.IsNullOrEmpty(chargeDetails) ? chargeDetails : "\u00a0")</p>
+                        <p class="card-text text-muted">@Localizer["DetailsRestricted"]</p>
                     </div>
                     @if (Model.ServerConnection)
                     {
@@ -79,7 +107,7 @@
                             }
                         </div>
                     }
-                </a>
+                }
             </div>
         }
     </div>

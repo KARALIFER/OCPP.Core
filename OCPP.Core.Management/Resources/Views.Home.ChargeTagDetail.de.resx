@@ -141,6 +141,9 @@
   <data name="ChargeTagUsersLabel" xml:space="preserve">
     <value>Zugewiesene Benutzer</value>
   </data>
+  <data name="ChargeTagUserNone" xml:space="preserve">
+    <value>Kein Benutzer zugewiesen</value>
+  </data>
   <data name="EditChargeTag" xml:space="preserve">
     <value>RFID-Schlüssel bearbeiten</value>
   </data>

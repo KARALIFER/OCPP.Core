@@ -132,6 +132,9 @@
   <data name="ChargeTime" xml:space="preserve">
     <value>{0}h {1}m</value>
   </data>
+  <data name="DetailsRestricted" xml:space="preserve">
+    <value>Details are available only for your own active sessions.</value>
+  </data>
   <data name="Charging" xml:space="preserve">
     <value>Charging</value>
   </data>

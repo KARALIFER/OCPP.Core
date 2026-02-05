@@ -106,14 +106,18 @@
                         @if (Model.Users != null && Model.Users.Any())
                         {
                             <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="SelectedUserId_None" name="SelectedUserId" value="" @(Model.SelectedUserId.HasValue ? "" : "checked") />
+                                    <label class="form-check-label" for="SelectedUserId_None">@Localizer["ChargeTagUserNone"]</label>
+                                </div>
                                 @for (int i = 0; i < Model.Users.Count; i++)
                                 {
                                     <div class="form-check">
                                         <input type="hidden" name="Users[@i].UserId" value="@Model.Users[i].UserId" />
                                         <input type="hidden" name="Users[@i].Username" value="@Model.Users[i].Username" />
                                         <input type="hidden" name="Users[@i].IsAssigned" value="false" />
-                                        <input class="form-check-input" type="checkbox" name="Users[@i].IsAssigned" value="true" @(Model.Users[i].IsAssigned ? "checked" : "") />
-                                        <label class="form-check-label">@Model.Users[i].Username</label>
+                                        <input class="form-check-input" type="radio" id="@($"SelectedUserId_{i}")" name="SelectedUserId" value="@Model.Users[i].UserId" @(Model.Users[i].IsAssigned ? "checked" : "") />
+                                        <label class="form-check-label" for="@($"SelectedUserId_{i}")">@Model.Users[i].Username</label>
                                     </div>
                                 }
                             </div>

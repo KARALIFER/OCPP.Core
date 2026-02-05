@@ -132,6 +132,9 @@
   <data name="ChargeTime" xml:space="preserve">
     <value>{0} Std. {1} Min.</value>
   </data>
+  <data name="DetailsRestricted" xml:space="preserve">
+    <value>Details sind nur für eigene aktive Ladevorgänge verfügbar.</value>
+  </data>
   <data name="Charging" xml:space="preserve">
     <value>Ladevorgang</value>
   </data>

@@ -135,6 +135,9 @@
   <data name="MyChargeTags" xml:space="preserve">
     <value>My RFID-Tags</value>
   </data>
+  <data name="MyTransactions" xml:space="preserve">
+    <value>My charging sessions</value>
+  </data>
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>
   </data>

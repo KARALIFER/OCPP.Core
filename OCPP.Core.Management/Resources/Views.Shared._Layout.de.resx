@@ -135,6 +135,9 @@
   <data name="MyChargeTags" xml:space="preserve">
     <value>Meine RFID-Karten</value>
   </data>
+  <data name="MyTransactions" xml:space="preserve">
+    <value>Meine Ladevorgänge</value>
+  </data>
   <data name="Logout" xml:space="preserve">
     <value>Abmelden</value>
   </data>

@@ -1,0 +1,126 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using OCPP.Core.Management.Models
+@using OCPP.Core.Database
+@inject IViewLocalizer Localizer
+@model MyTransactionsViewModel
+@{
+    ViewData["Title"] = Localizer["Title"];
+    string fromValue = Model.DateFrom?.ToString("yyyy-MM-dd") ?? string.Empty;
+    string toValue = Model.DateTo?.ToString("yyyy-MM-dd") ?? string.Empty;
+    string selectedStatus = string.IsNullOrWhiteSpace(Model.SelectedStatus) ? "all" : Model.SelectedStatus;
+}
+
+<h4>@Localizer["MyTransactions"]</h4>
+
+<form method="get" class="mb-3">
+    <div class="form-row">
+        <div class="col-md-3">
+            <label for="chargePointId">@Localizer["ChargePointLabel"]</label>
+            <select class="form-control" id="chargePointId" name="chargePointId">
+                <option value="">@Localizer["ChargePointAll"]</option>
+                @if (Model.ChargePoints != null)
+                {
+                    foreach (ChargePoint cp in Model.ChargePoints)
+                    {
+                        if (cp.ChargePointId == Model.SelectedChargePointId)
+                        {
+                            <option value="@cp.ChargePointId" selected="selected">@cp.Name (@cp.ChargePointId)</option>
+                        }
+                        else
+                        {
+                            <option value="@cp.ChargePointId">@cp.Name (@cp.ChargePointId)</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label for="status">@Localizer["StatusLabel"]</label>
+            <select class="form-control" id="status" name="status">
+                @if (selectedStatus == "all")
+                {
+                    <option value="all" selected="selected">@Localizer["StatusAll"]</option>
+                }
+                else
+                {
+                    <option value="all">@Localizer["StatusAll"]</option>
+                }
+                @if (selectedStatus == "active")
+                {
+                    <option value="active" selected="selected">@Localizer["StatusActive"]</option>
+                }
+                else
+                {
+                    <option value="active">@Localizer["StatusActive"]</option>
+                }
+                @if (selectedStatus == "completed")
+                {
+                    <option value="completed" selected="selected">@Localizer["StatusCompleted"]</option>
+                }
+                else
+                {
+                    <option value="completed">@Localizer["StatusCompleted"]</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label for="from">@Localizer["FromLabel"]</label>
+            <input class="form-control" type="date" id="from" name="from" value="@fromValue" />
+        </div>
+        <div class="col-md-2">
+            <label for="to">@Localizer["ToLabel"]</label>
+            <input class="form-control" type="date" id="to" name="to" value="@toValue" />
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-primary mr-2" type="submit">@Localizer["ApplyFilters"]</button>
+            <a class="btn btn-secondary" href="~/Home/MyTransactions">@Localizer["ResetFilters"]</a>
+        </div>
+    </div>
+</form>
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary" href="~/Home/MyTransactionsExport?chargePointId=@Model.SelectedChargePointId&status=@selectedStatus&from=@fromValue&to=@toValue">
+        <i class="fas fa-file-csv"></i> @Localizer["ExportCsv"]
+    </a>
+    <a class="btn btn-outline-secondary" href="~/Home/MyTransactionsExportXlsx?chargePointId=@Model.SelectedChargePointId&status=@selectedStatus&from=@fromValue&to=@toValue">
+        <i class="fas fa-file-excel"></i> @Localizer["ExportXlsx"]
+    </a>
+    <button class="btn btn-outline-secondary" type="button" disabled title="@Localizer["ExportPdfHint"]">
+        <i class="fas fa-file-pdf"></i> @Localizer["ExportPdf"]
+    </button>
+</div>
+
+<table id="dtMyTransactions" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>@Localizer["ChargePointLabel"]</th>
+            <th>@Localizer["ConnectorLabel"]</th>
+            <th>@Localizer["StartTime"]</th>
+            <th>@Localizer["StopTime"]</th>
+            <th>@Localizer["StartTag"]</th>
+            <th>@Localizer["StopTag"]</th>
+            <th>@Localizer["StartMeter"]</th>
+            <th>@Localizer["StopMeter"]</th>
+            <th>@Localizer["ChargeSum"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Transactions != null)
+        {
+            foreach (TransactionExtended transaction in Model.Transactions)
+            {
+                <tr>
+                    <td>@transaction.ChargePointId</td>
+                    <td>@transaction.ConnectorId</td>
+                    <td>@transaction.StartTime.ToLocalTime()</td>
+                    <td>@(transaction.StopTime?.ToLocalTime().ToString() ?? string.Empty)</td>
+                    <td>@(string.IsNullOrEmpty(transaction.StartTagName) ? transaction.StartTagId : transaction.StartTagName)</td>
+                    <td>@(string.IsNullOrEmpty(transaction.StopTagName) ? transaction.StopTagId : transaction.StopTagName)</td>
+                    <td>@string.Format("{0:0.0##}", transaction.MeterStart)</td>
+                    <td>@(transaction.MeterStop.HasValue ? string.Format("{0:0.0##}", transaction.MeterStop) : string.Empty)</td>
+                    <td>@(transaction.MeterStop.HasValue ? string.Format("{0:0.0##}", (transaction.MeterStop - transaction.MeterStart)) : string.Empty)</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

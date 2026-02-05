@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>My charging sessions</value>
+  </data>
+  <data name="MyTransactions" xml:space="preserve">
+    <value>My charging sessions</value>
+  </data>
+  <data name="ChargePointLabel" xml:space="preserve">
+    <value>Charge point</value>
+  </data>
+  <data name="ChargePointAll" xml:space="preserve">
+    <value>All charge points</value>
+  </data>
+  <data name="ConnectorLabel" xml:space="preserve">
+    <value>Connector</value>
+  </data>
+  <data name="StatusLabel" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="StatusAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="StatusActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="StatusCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="FromLabel" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="ToLabel" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="ApplyFilters" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="ResetFilters" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="ExportCsv" xml:space="preserve">
+    <value>CSV Export</value>
+  </data>
+  <data name="ExportXlsx" xml:space="preserve">
+    <value>XLSX Export</value>
+  </data>
+  <data name="ExportPdf" xml:space="preserve">
+    <value>PDF Export</value>
+  </data>
+  <data name="ExportPdfHint" xml:space="preserve">
+    <value>PDF export is not available yet.</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>Start time</value>
+  </data>
+  <data name="StopTime" xml:space="preserve">
+    <value>Stop time</value>
+  </data>
+  <data name="StartTag" xml:space="preserve">
+    <value>Start tag</value>
+  </data>
+  <data name="StopTag" xml:space="preserve">
+    <value>Stop tag</value>
+  </data>
+  <data name="StartMeter" xml:space="preserve">
+    <value>Start meter</value>
+  </data>
+  <data name="StopMeter" xml:space="preserve">
+    <value>Stop meter</value>
+  </data>
+  <data name="ChargeSum" xml:space="preserve">
+    <value>kWh</value>
+  </data>
+</root>

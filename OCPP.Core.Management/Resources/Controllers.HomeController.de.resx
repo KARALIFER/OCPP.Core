@@ -138,6 +138,9 @@
   <data name="ChargeReportTag" xml:space="preserve">
     <value>RFID-Karte</value>
   </data>
+  <data name="ChargePointLabel" xml:space="preserve">
+    <value>Ladestation</value>
+  </data>
   <data name="ChargeSum" xml:space="preserve">
     <value>Geladen</value>
   </data>
@@ -146,6 +149,9 @@
   </data>
   <data name="ChargeTagIdRequired" xml:space="preserve">
     <value>Bitte geben Sie eine RFID-Nummer an.</value>
+  </data>
+  <data name="ConnectorLabel" xml:space="preserve">
+    <value>Anschluss</value>
   </data>
   <data name="ChargeTagAlreadyAssigned" xml:space="preserve">
     <value>RFID-Tag ist bereits vergeben.</value>

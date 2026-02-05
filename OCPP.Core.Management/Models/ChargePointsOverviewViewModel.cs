@@ -85,5 +85,10 @@ namespace OCPP.Core.Management.Models
         /// Details about the current charge process
         /// </summary>
         public string CurrentChargeData { get; set; }
+
+        /// <summary>
+        /// User is allowed to navigate to details for this charge point
+        /// </summary>
+        public bool CanNavigate { get; set; }
     }
 }

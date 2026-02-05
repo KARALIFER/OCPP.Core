@@ -74,20 +74,12 @@ namespace OCPP.Core.Management.Controllers
                 if (Request.Method == "POST")
                 {
                     string errorMsg = null;
-                    List<int> assignedUserIds = ctvm.Users?
-                        .Where(user => user.IsAssigned)
-                        .Select(user => user.UserId)
-                        .ToList() ?? new List<int>();
-                    if (assignedUserIds.Count > 1)
-                    {
-                        errorMsg = _localizer["ChargeTagAlreadyAssigned"].Value;
-                    }
-                    else if (assignedUserIds.Count == 1)
+                    int? selectedUserId = ctvm.SelectedUserId;
+                    if (selectedUserId.HasValue)
                     {
                         string currentTagId = Id == "@" ? ctvm.TagId : currentChargeTag?.TagId;
-                        int assignedUserId = assignedUserIds[0];
                         bool userHasOtherTag = DbContext.UserChargeTags
-                            .Any(tag => tag.UserId == assignedUserId &&
+                            .Any(tag => tag.UserId == selectedUserId.Value &&
                                         !tag.TagId.Equals(currentTagId, StringComparison.InvariantCultureIgnoreCase));
                         if (userHasOtherTag)
                         {
@@ -132,7 +124,7 @@ namespace OCPP.Core.Management.Controllers
                             newTag.Blocked = ctvm.Blocked;
                             DbContext.ChargeTags.Add(newTag);
                             DbContext.SaveChanges();
-                            UpdateChargeTagUsers(ctvm.TagId, ctvm.Users);
+                            UpdateChargeTagUsers(ctvm.TagId, selectedUserId);
                             DbContext.SaveChanges();
                             Logger.LogInformation("ChargeTag: New => charge tag saved: {0} / {1}", ctvm.TagId, ctvm.TagName);
                         }
@@ -169,7 +161,7 @@ namespace OCPP.Core.Management.Controllers
                             currentChargeTag.ExpiryDate = ctvm.ExpiryDate;
                             currentChargeTag.Blocked = ctvm.Blocked;
                             DbContext.SaveChanges();
-                            UpdateChargeTagUsers(currentChargeTag.TagId, ctvm.Users);
+                            UpdateChargeTagUsers(currentChargeTag.TagId, selectedUserId);
                             DbContext.SaveChanges();
                             Logger.LogInformation("ChargeTag: Edit => charge tag saved: {0} / {1}", ctvm.TagId, ctvm.TagName);
                         }
@@ -183,6 +175,7 @@ namespace OCPP.Core.Management.Controllers
                     ctvm = new ChargeTagViewModel();
                     ctvm.ChargeTags = dbChargeTags;
                     ctvm.CurrentTagId = Id;
+                    ctvm.SelectedUserId = null;
                     ctvm.Users = BuildUserAssignments(dbUsers, new HashSet<int>());
 
                     if (currentChargeTag != null)
@@ -198,6 +191,7 @@ namespace OCPP.Core.Management.Controllers
                             .Where(tag => tag.TagId == currentChargeTag.TagId)
                             .Select(tag => tag.UserId)
                             .ToHashSet();
+                        ctvm.SelectedUserId = assignedUserIds.FirstOrDefault();
                         ctvm.Users = BuildUserAssignments(dbUsers, assignedUserIds);
                     }
 
@@ -239,17 +233,16 @@ namespace OCPP.Core.Management.Controllers
             return assignments;
         }
 
-        private void UpdateChargeTagUsers(string tagId, IEnumerable<ChargeTagUserAssignmentViewModel> assignments)
+        private void UpdateChargeTagUsers(string tagId, int? selectedUserId)
         {
-            if (string.IsNullOrWhiteSpace(tagId) || assignments == null)
+            if (string.IsNullOrWhiteSpace(tagId))
             {
                 return;
             }
 
-            HashSet<int> assignedUserIds = assignments
-                .Where(user => user.IsAssigned)
-                .Select(user => user.UserId)
-                .ToHashSet();
+            HashSet<int> assignedUserIds = selectedUserId.HasValue
+                ? new HashSet<int> { selectedUserId.Value }
+                : new HashSet<int>();
 
             List<UserChargeTag> existingAssignments = DbContext.UserChargeTags
                 .Where(tag => tag.TagId == tagId)

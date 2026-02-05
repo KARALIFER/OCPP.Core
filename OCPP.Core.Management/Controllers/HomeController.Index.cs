@@ -61,6 +61,7 @@ namespace OCPP.Core.Management.Controllers
                 HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
                 HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
                 HashSet<string> hiddenChargePointIds = GetHiddenChargePointIds();
+                bool isAdminUser = User != null && User.IsInRole(Constants.AdminRoleName);
                 Dictionary<string, ChargePointStatus> dictOnlineStatus = new Dictionary<string, ChargePointStatus>();
                 #region Load online status from OCPP server
                 string serverApiUrl = base.Config.GetValue<string>("ServerApiUrl");
@@ -296,6 +297,9 @@ namespace OCPP.Core.Management.Controllers
                                         isOwnChargeSession = permittedChargeTagIds.Contains(connStatus.StartTagId);
                                     }
 
+                                    bool canNavigate = isAdminUser ||
+                                        (isOwnChargeSession && cpovm.ConnectorStatus == ConnectorStatusEnum.Occupied);
+
                                     // Add current charge data to view model
                                     if (cpovm.ConnectorStatus == ConnectorStatusEnum.Occupied &&
                                         onlineConnectorStatus != null)
@@ -336,12 +340,14 @@ namespace OCPP.Core.Management.Controllers
                                         cpovm.StartTime = null;
                                         cpovm.StopTime = null;
                                         cpovm.CurrentChargeData = null;
+                                        canNavigate = false;
                                         if (cpovm.ConnectorStatus == ConnectorStatusEnum.Undefined)
                                         {
                                             cpovm.ConnectorStatus = ConnectorStatusEnum.Available;
                                         }
                                     }
 
+                                    cpovm.CanNavigate = canNavigate;
                                     overviewModel.ChargePoints.Add(cpovm);
                                 }
                             }
@@ -364,10 +370,15 @@ namespace OCPP.Core.Management.Controllers
                                 cpovm.StartTime = null;
                                 cpovm.StopTime = null;
                                 cpovm.CurrentChargeData = null;
+                                cpovm.CanNavigate = false;
                                 if (cpovm.ConnectorStatus == ConnectorStatusEnum.Undefined)
                                 {
                                     cpovm.ConnectorStatus = ConnectorStatusEnum.Available;
                                 }
+                            }
+                            else
+                            {
+                                cpovm.CanNavigate = isAdminUser;
                             }
                             overviewModel.ChargePoints.Add(cpovm);
                         }

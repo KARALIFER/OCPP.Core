@@ -17,29 +17,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Collections.Generic;
 using OCPP.Core.Database;
 
 namespace OCPP.Core.Management.Models
 {
-    public class UserViewModel
+    public class MyTransactionsViewModel
     {
-        public int? UserId { get; set; }
+        public List<TransactionExtended> Transactions { get; set; }
 
-        public string Username { get; set; }
+        public List<ChargePoint> ChargePoints { get; set; }
 
-        public string Password { get; set; }
+        public string SelectedChargePointId { get; set; }
 
-        public bool IsAdmin { get; set; }
+        public string SelectedStatus { get; set; }
 
-        public List<User> Users { get; set; }
+        public DateTime? DateFrom { get; set; }
 
-        public Dictionary<int, string> UserChargeTagNames { get; set; }
-
-        public List<UserChargeTagAssignmentViewModel> ChargeTags { get; set; }
-
-        public string SelectedTagId { get; set; }
-
-        public List<UserChargePointAssignmentViewModel> ChargePoints { get; set; }
+        public DateTime? DateTo { get; set; }
     }
 }
