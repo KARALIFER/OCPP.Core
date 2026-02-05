@@ -44,10 +44,7 @@ namespace OCPP.Core.Management.Controllers
                     return RedirectToAction("Error", new { Id = "" });
                 }
 
-                List<UserAccount> dbUsers = DbContext.UserAccounts
-                    .Include(user => user.ChargeTag)
-                    .OrderBy(x => x.LoginName)
-                    .ToList();
+                List<UserAccount> dbUsers = LoadUserAccounts();
                 List<ChargeTag> dbChargeTags = DbContext.ChargeTags.OrderBy(x => x.TagName).ToList();
                 List<ChargePoint> dbChargePoints = DbContext.ChargePoints.OrderBy(x => x.Name).ToList();
                 UserAccount currentUser = null;
@@ -108,7 +105,7 @@ namespace OCPP.Core.Management.Controllers
                             {
                                 ViewBag.ErrorMsg = assignmentError;
                                 uvm.UserId = newUser.UserId;
-                                uvm.Users = dbUsers;
+                                uvm.Users = LoadUserAccounts();
                                 uvm.ChargeTags = BuildChargeTagList(dbChargeTags, newUser.UserId);
                                 return View("UserDetail", uvm);
                             }
@@ -123,13 +120,14 @@ namespace OCPP.Core.Management.Controllers
                                 Logger.LogWarning(dbEx, "User: Error assigning charge tag for new user {0}", newUser.LoginName);
                                 ViewBag.ErrorMsg = _localizer["ChargeTagAssignmentConflict"].Value;
                                 uvm.UserId = newUser.UserId;
-                                uvm.Users = dbUsers;
+                                uvm.Users = LoadUserAccounts();
                                 uvm.ChargeTags = BuildChargeTagList(dbChargeTags, newUser.UserId);
                                 return View("UserDetail", uvm);
                             }
                         }
                         else
                         {
+                            uvm.Users = dbUsers;
                             uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser?.UserId);
                             uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
                             ViewBag.ErrorMsg = errorMsg;
@@ -413,6 +411,14 @@ namespace OCPP.Core.Management.Controllers
                     existingAssignment.IsHidden = isHidden;
                 }
             }
+        }
+
+        private List<UserAccount> LoadUserAccounts()
+        {
+            return DbContext.UserAccounts
+                .Include(user => user.ChargeTag)
+                .OrderBy(user => user.LoginName)
+                .ToList();
         }
     }
 }

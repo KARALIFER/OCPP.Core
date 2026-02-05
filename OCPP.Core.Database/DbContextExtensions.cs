@@ -19,17 +19,13 @@ namespace OCPP.Core.Database
             if (!string.IsNullOrWhiteSpace(sqlServerConnectionString))
             {
                 services.AddDbContext<OCPPCoreContext>(
-                    options => options.UseSqlServer(
-                        sqlServerConnectionString,
-                        sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory_SqlServer")),
+                    options => options.UseSqlServer(sqlServerConnectionString),
                     ServiceLifetime.Transient);
             }
             else if (!string.IsNullOrWhiteSpace(sqliteConnectionString))
             {
                 services.AddDbContext<OCPPCoreContext>(
-                    options => options.UseSqlite(
-                        sqliteConnectionString,
-                        sqliteOptions => sqliteOptions.MigrationsHistoryTable("__EFMigrationsHistory_Sqlite")),
+                    options => options.UseSqlite(sqliteConnectionString),
                     ServiceLifetime.Transient);
             }
         }
