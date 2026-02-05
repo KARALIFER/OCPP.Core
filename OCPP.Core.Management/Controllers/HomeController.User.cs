@@ -108,7 +108,10 @@ namespace OCPP.Core.Management.Controllers
                             {
                                 ViewBag.ErrorMsg = assignmentError;
                                 uvm.UserId = newUser.UserId;
-                                uvm.Users = dbUsers;
+                                uvm.Users = DbContext.UserAccounts
+                                    .Include(user => user.ChargeTag)
+                                    .OrderBy(user => user.LoginName)
+                                    .ToList();
                                 uvm.ChargeTags = BuildChargeTagList(dbChargeTags, newUser.UserId);
                                 return View("UserDetail", uvm);
                             }
@@ -123,7 +126,10 @@ namespace OCPP.Core.Management.Controllers
                                 Logger.LogWarning(dbEx, "User: Error assigning charge tag for new user {0}", newUser.LoginName);
                                 ViewBag.ErrorMsg = _localizer["ChargeTagAssignmentConflict"].Value;
                                 uvm.UserId = newUser.UserId;
-                                uvm.Users = dbUsers;
+                                uvm.Users = DbContext.UserAccounts
+                                    .Include(user => user.ChargeTag)
+                                    .OrderBy(user => user.LoginName)
+                                    .ToList();
                                 uvm.ChargeTags = BuildChargeTagList(dbChargeTags, newUser.UserId);
                                 return View("UserDetail", uvm);
                             }
