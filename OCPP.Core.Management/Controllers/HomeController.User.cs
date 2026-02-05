@@ -59,20 +59,44 @@ namespace OCPP.Core.Management.Controllers
                 if (Request.Method == "POST")
                 {
                     string errorMsg = null;
+                    List<string> selectedTagIds = uvm.ChargeTags?
+                        .Where(tag => tag.IsAssigned)
+                        .Select(tag => tag.TagId)
+                        .ToList() ?? new List<string>();
+                    if (selectedTagIds.Count > 1)
+                    {
+                        errorMsg = _localizer["UserAlreadyHasChargeTag"].Value;
+                    }
+                    else if (selectedTagIds.Count == 1)
+                    {
+                        string tagId = selectedTagIds[0];
+                        int? currentUserId = currentUser?.UserId;
+                        int? existingOwnerId = DbContext.UserChargeTags
+                            .Where(tag => tag.TagId == tagId)
+                            .Select(tag => (int?)tag.UserId)
+                            .FirstOrDefault();
+                        if (existingOwnerId.HasValue && (!currentUserId.HasValue || existingOwnerId.Value != currentUserId.Value))
+                        {
+                            errorMsg = _localizer["ChargeTagAlreadyAssigned"].Value;
+                        }
+                    }
 
                     if (Id == "@")
                     {
-                        if (string.IsNullOrWhiteSpace(uvm.Username))
+                        if (string.IsNullOrEmpty(errorMsg))
                         {
-                            errorMsg = _localizer["UserNameRequired"].Value;
-                        }
-                        else if (string.IsNullOrWhiteSpace(uvm.Password))
-                        {
-                            errorMsg = _localizer["UserPasswordRequired"].Value;
-                        }
-                        else if (dbUsers.Any(user => user.Username.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
-                        {
-                            errorMsg = _localizer["UserNameExists"].Value;
+                            if (string.IsNullOrWhiteSpace(uvm.Username))
+                            {
+                                errorMsg = _localizer["UserNameRequired"].Value;
+                            }
+                            else if (string.IsNullOrWhiteSpace(uvm.Password))
+                            {
+                                errorMsg = _localizer["UserPasswordRequired"].Value;
+                            }
+                            else if (dbUsers.Any(user => user.Username.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
+                            {
+                                errorMsg = _localizer["UserNameExists"].Value;
+                            }
                         }
 
                         if (string.IsNullOrEmpty(errorMsg))
@@ -118,13 +142,16 @@ namespace OCPP.Core.Management.Controllers
                         }
                         else
                         {
-                            if (string.IsNullOrWhiteSpace(uvm.Username))
+                            if (string.IsNullOrEmpty(errorMsg))
                             {
-                                errorMsg = _localizer["UserNameRequired"].Value;
-                            }
-                            else if (dbUsers.Any(user => user.UserId != currentUser.UserId && user.Username.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
-                            {
-                                errorMsg = _localizer["UserNameExists"].Value;
+                                if (string.IsNullOrWhiteSpace(uvm.Username))
+                                {
+                                    errorMsg = _localizer["UserNameRequired"].Value;
+                                }
+                                else if (dbUsers.Any(user => user.UserId != currentUser.UserId && user.Username.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
+                                {
+                                    errorMsg = _localizer["UserNameExists"].Value;
+                                }
                             }
 
                             if (string.IsNullOrEmpty(errorMsg))
@@ -158,7 +185,27 @@ namespace OCPP.Core.Management.Controllers
                 {
                     uvm = new UserViewModel
                     {
-                        Users = dbUsers
+                        Users = dbUsers,
+                        UserChargeTagNames = DbContext.UserChargeTags
+                            .Include(tag => tag.ChargeTag)
+                            .GroupBy(tag => tag.UserId)
+                            .ToDictionary(
+                                group => group.Key,
+                                group =>
+                                {
+                                    UserChargeTag assignment = group.FirstOrDefault();
+                                    if (assignment?.ChargeTag == null)
+                                    {
+                                        return string.Empty;
+                                    }
+
+                                    if (string.IsNullOrWhiteSpace(assignment.ChargeTag.TagName))
+                                    {
+                                        return assignment.ChargeTag.TagId;
+                                    }
+
+                                    return $"{assignment.ChargeTag.TagId} ({assignment.ChargeTag.TagName})";
+                                })
                     };
 
                     if (currentUser != null)

@@ -74,13 +74,33 @@ namespace OCPP.Core.Management.Controllers
                 if (Request.Method == "POST")
                 {
                     string errorMsg = null;
+                    List<int> assignedUserIds = ctvm.Users?
+                        .Where(user => user.IsAssigned)
+                        .Select(user => user.UserId)
+                        .ToList() ?? new List<int>();
+                    if (assignedUserIds.Count > 1)
+                    {
+                        errorMsg = _localizer["ChargeTagAlreadyAssigned"].Value;
+                    }
+                    else if (assignedUserIds.Count == 1)
+                    {
+                        string currentTagId = Id == "@" ? ctvm.TagId : currentChargeTag?.TagId;
+                        int assignedUserId = assignedUserIds[0];
+                        bool userHasOtherTag = DbContext.UserChargeTags
+                            .Any(tag => tag.UserId == assignedUserId &&
+                                        !tag.TagId.Equals(currentTagId, StringComparison.InvariantCultureIgnoreCase));
+                        if (userHasOtherTag)
+                        {
+                            errorMsg = _localizer["UserAlreadyHasChargeTag"].Value;
+                        }
+                    }
 
                     if (Id == "@")
                     {
                         Logger.LogTrace("ChargeTag: Creating new charge tag...");
 
                         // Create new tag
-                        if (string.IsNullOrWhiteSpace(ctvm.TagId))
+                        if (string.IsNullOrEmpty(errorMsg) && string.IsNullOrWhiteSpace(ctvm.TagId))
                         {
                             errorMsg = _localizer["ChargeTagIdRequired"].Value;
                             Logger.LogInformation("ChargeTag: New => no charge tag ID entered");
@@ -125,6 +145,13 @@ namespace OCPP.Core.Management.Controllers
                     }
                     else if (currentChargeTag.TagId == Id)
                     {
+                        if (!string.IsNullOrEmpty(errorMsg))
+                        {
+                            ctvm.Users = BuildUserAssignments(dbUsers, ctvm.Users);
+                            ViewBag.ErrorMsg = errorMsg;
+                            return View("ChargeTagDetail", ctvm);
+                        }
+
                         if (Request.Form["action"] == "Delete")
                         {
                             // Delete existing tag

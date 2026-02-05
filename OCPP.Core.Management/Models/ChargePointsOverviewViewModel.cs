@@ -57,6 +57,11 @@ namespace OCPP.Core.Management.Models
         public double? MeterStop { get; set; }
 
         /// <summary>
+        /// Latest meter value reported by the connector
+        /// </summary>
+        public double? LastMeter { get; set; }
+
+        /// <summary>
         /// Start time of last transaction
         /// </summary>
         public DateTime? StartTime { get; set; }

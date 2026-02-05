@@ -132,6 +132,9 @@
   <data name="UserList" xml:space="preserve">
     <value>Benutzer</value>
   </data>
+  <data name="ChargeTagLabel" xml:space="preserve">
+    <value>RFID-Tag</value>
+  </data>
   <data name="UserNameLabel" xml:space="preserve">
     <value>Benutzername</value>
   </data>
