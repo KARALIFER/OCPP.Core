@@ -112,8 +112,8 @@
                                         <input type="hidden" name="Users[@i].UserId" value="@Model.Users[i].UserId" />
                                         <input type="hidden" name="Users[@i].Username" value="@Model.Users[i].Username" />
                                         <input type="hidden" name="Users[@i].IsAssigned" value="false" />
-                                        <input class="form-check-input" type="checkbox" name="Users[@i].IsAssigned" value="true" @(Model.Users[i].IsAssigned ? "checked" : "") />
-                                        <label class="form-check-label">@Model.Users[i].Username</label>
+                                        <input class="form-check-input" type="checkbox" id="@($"Users_{i}__IsAssigned")" name="Users[@i].IsAssigned" value="true" @(Model.Users[i].IsAssigned ? "checked" : "") />
+                                        <label class="form-check-label" for="@($"Users_{i}__IsAssigned")">@Model.Users[i].Username</label>
                                     </div>
                                 }
                             </div>
