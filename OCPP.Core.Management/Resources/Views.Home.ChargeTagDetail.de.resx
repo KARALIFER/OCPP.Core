@@ -138,6 +138,9 @@
   <data name="ChargeTagUsersEmpty" xml:space="preserve">
     <value>Keine Benutzer verfügbar</value>
   </data>
+  <data name="ChargeTagUserUnassigned" xml:space="preserve">
+    <value>Kein Benutzer zugewiesen</value>
+  </data>
   <data name="ChargeTagUsersLabel" xml:space="preserve">
     <value>Zugewiesene Benutzer</value>
   </data>

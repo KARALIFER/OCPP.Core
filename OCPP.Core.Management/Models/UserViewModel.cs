@@ -38,6 +38,8 @@ namespace OCPP.Core.Management.Models
 
         public List<UserChargeTagAssignmentViewModel> ChargeTags { get; set; }
 
+        public string SelectedChargeTagId { get; set; }
+
         public List<UserChargePointAssignmentViewModel> ChargePoints { get; set; }
     }
 }

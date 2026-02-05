@@ -51,20 +51,24 @@
             <h5>@Localizer["AssignedChargeTags"]</h5>
             @if (Model.ChargeTags != null && Model.ChargeTags.Count > 0)
             {
-                <div class="list-group">
+                <select class="form-control" id="SelectedChargeTagId" name="SelectedChargeTagId">
+                    <option value="">@Localizer["NoChargeTagAssigned"]</option>
                     @for (int index = 0; index < Model.ChargeTags.Count; index++)
                     {
-                        <div class="list-group-item">
-                            <input type="hidden" name="ChargeTags[@index].TagId" value="@Model.ChargeTags[index].TagId" />
-                            <input type="hidden" name="ChargeTags[@index].TagName" value="@Model.ChargeTags[index].TagName" />
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="@($"ChargeTags_{index}__IsAssigned")" name="ChargeTags[@index].IsAssigned" value="true" @(Model.ChargeTags[index].IsAssigned ? "checked" : "") />
-                                <input type="hidden" name="ChargeTags[@index].IsAssigned" value="false" />
-                                <label class="form-check-label" for="@($"ChargeTags_{index}__IsAssigned")">@Model.ChargeTags[index].TagId - @Model.ChargeTags[index].TagName</label>
-                            </div>
-                        </div>
+                        if (Model.SelectedChargeTagId == Model.ChargeTags[index].TagId)
+                        {
+                            <option value="@Model.ChargeTags[index].TagId" selected="selected">
+                                @Model.ChargeTags[index].TagId - @Model.ChargeTags[index].TagName
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@Model.ChargeTags[index].TagId">
+                                @Model.ChargeTags[index].TagId - @Model.ChargeTags[index].TagName
+                            </option>
+                        }
                     }
-                </div>
+                </select>
             }
             else
             {

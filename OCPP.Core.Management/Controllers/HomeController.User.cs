@@ -59,10 +59,18 @@ namespace OCPP.Core.Management.Controllers
                 if (Request.Method == "POST")
                 {
                     string errorMsg = null;
-                    List<string> selectedTagIds = uvm.ChargeTags?
-                        .Where(tag => tag.IsAssigned)
-                        .Select(tag => tag.TagId)
-                        .ToList() ?? new List<string>();
+                    List<string> selectedTagIds = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(uvm.SelectedChargeTagId))
+                    {
+                        selectedTagIds.Add(uvm.SelectedChargeTagId);
+                    }
+                    else if (uvm.ChargeTags != null)
+                    {
+                        selectedTagIds = uvm.ChargeTags
+                            .Where(tag => tag.IsAssigned)
+                            .Select(tag => tag.TagId)
+                            .ToList();
+                    }
                     if (selectedTagIds.Count > 1)
                     {
                         errorMsg = _localizer["UserAlreadyHasChargeTag"].Value;
@@ -121,13 +129,15 @@ namespace OCPP.Core.Management.Controllers
                             DbContext.Users.Add(newUser);
                             DbContext.SaveChanges();
 
+                            uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, selectedTagIds.ToHashSet(StringComparer.InvariantCultureIgnoreCase));
                             UpdateUserChargeTags(newUser.UserId, uvm.ChargeTags);
                             UpdateUserChargePoints(newUser.UserId, uvm.ChargePoints);
                             DbContext.SaveChanges();
                         }
                         else
                         {
-                            uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, uvm.ChargeTags);
+                            uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, selectedTagIds.ToHashSet(StringComparer.InvariantCultureIgnoreCase));
+                            uvm.SelectedChargeTagId = selectedTagIds.FirstOrDefault();
                             uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
                             ViewBag.ErrorMsg = errorMsg;
                             return View("UserDetail", uvm);
@@ -164,6 +174,7 @@ namespace OCPP.Core.Management.Controllers
                                 currentUser.IsAdmin = uvm.IsAdmin;
                                 DbContext.SaveChanges();
 
+                                uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, selectedTagIds.ToHashSet(StringComparer.InvariantCultureIgnoreCase));
                                 UpdateUserChargeTags(currentUser.UserId, uvm.ChargeTags);
                                 UpdateUserChargePoints(currentUser.UserId, uvm.ChargePoints);
                                 DbContext.SaveChanges();
@@ -171,7 +182,8 @@ namespace OCPP.Core.Management.Controllers
                             else
                             {
                                 uvm.UserId = currentUser.UserId;
-                                uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, uvm.ChargeTags);
+                                uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, selectedTagIds.ToHashSet(StringComparer.InvariantCultureIgnoreCase));
+                                uvm.SelectedChargeTagId = selectedTagIds.FirstOrDefault();
                                 uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
                                 ViewBag.ErrorMsg = errorMsg;
                                 return View("UserDetail", uvm);
@@ -218,6 +230,7 @@ namespace OCPP.Core.Management.Controllers
                             .Select(tag => tag.TagId)
                             .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
                         uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, assignedTags);
+                        uvm.SelectedChargeTagId = assignedTags.FirstOrDefault();
 
                         List<UserChargePoint> userChargePoints = DbContext.UserChargePoints
                             .Where(point => point.UserId == currentUser.UserId)
