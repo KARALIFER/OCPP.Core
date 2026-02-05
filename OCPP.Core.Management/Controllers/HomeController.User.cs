@@ -136,6 +136,7 @@ namespace OCPP.Core.Management.Controllers
                         }
                         else
                         {
+                            uvm.Users = dbUsers;
                             uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser?.UserId);
                             uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
                             ViewBag.ErrorMsg = errorMsg;
