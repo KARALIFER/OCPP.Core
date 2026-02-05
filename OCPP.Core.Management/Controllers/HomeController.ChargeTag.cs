@@ -74,10 +74,18 @@ namespace OCPP.Core.Management.Controllers
                 if (Request.Method == "POST")
                 {
                     string errorMsg = null;
-                    List<int> assignedUserIds = ctvm.Users?
-                        .Where(user => user.IsAssigned)
-                        .Select(user => user.UserId)
-                        .ToList() ?? new List<int>();
+                    List<int> assignedUserIds = new List<int>();
+                    if (ctvm.SelectedUserId.HasValue)
+                    {
+                        assignedUserIds.Add(ctvm.SelectedUserId.Value);
+                    }
+                    else if (ctvm.Users != null)
+                    {
+                        assignedUserIds = ctvm.Users
+                            .Where(user => user.IsAssigned)
+                            .Select(user => user.UserId)
+                            .ToList();
+                    }
                     if (assignedUserIds.Count > 1)
                     {
                         errorMsg = _localizer["ChargeTagAlreadyAssigned"].Value;
@@ -88,7 +96,7 @@ namespace OCPP.Core.Management.Controllers
                         int assignedUserId = assignedUserIds[0];
                         bool userHasOtherTag = DbContext.UserChargeTags
                             .Any(tag => tag.UserId == assignedUserId &&
-                                        !tag.TagId.Equals(currentTagId, StringComparison.InvariantCultureIgnoreCase));
+                                        tag.TagId != currentTagId);
                         if (userHasOtherTag)
                         {
                             errorMsg = _localizer["UserAlreadyHasChargeTag"].Value;
@@ -132,13 +140,15 @@ namespace OCPP.Core.Management.Controllers
                             newTag.Blocked = ctvm.Blocked;
                             DbContext.ChargeTags.Add(newTag);
                             DbContext.SaveChanges();
+                            ctvm.Users = BuildUserAssignments(dbUsers, assignedUserIds.ToHashSet());
                             UpdateChargeTagUsers(ctvm.TagId, ctvm.Users);
                             DbContext.SaveChanges();
                             Logger.LogInformation("ChargeTag: New => charge tag saved: {0} / {1}", ctvm.TagId, ctvm.TagName);
                         }
                         else
                         {
-                            ctvm.Users = BuildUserAssignments(dbUsers, ctvm.Users);
+                            ctvm.Users = BuildUserAssignments(dbUsers, assignedUserIds.ToHashSet());
+                            ctvm.SelectedUserId = assignedUserIds.Count == 1 ? assignedUserIds[0] : null;
                             ViewBag.ErrorMsg = errorMsg;
                             return View("ChargeTagDetail", ctvm);
                         }
@@ -147,7 +157,8 @@ namespace OCPP.Core.Management.Controllers
                     {
                         if (!string.IsNullOrEmpty(errorMsg))
                         {
-                            ctvm.Users = BuildUserAssignments(dbUsers, ctvm.Users);
+                            ctvm.Users = BuildUserAssignments(dbUsers, assignedUserIds.ToHashSet());
+                            ctvm.SelectedUserId = assignedUserIds.Count == 1 ? assignedUserIds[0] : null;
                             ViewBag.ErrorMsg = errorMsg;
                             return View("ChargeTagDetail", ctvm);
                         }
@@ -169,6 +180,7 @@ namespace OCPP.Core.Management.Controllers
                             currentChargeTag.ExpiryDate = ctvm.ExpiryDate;
                             currentChargeTag.Blocked = ctvm.Blocked;
                             DbContext.SaveChanges();
+                            ctvm.Users = BuildUserAssignments(dbUsers, assignedUserIds.ToHashSet());
                             UpdateChargeTagUsers(currentChargeTag.TagId, ctvm.Users);
                             DbContext.SaveChanges();
                             Logger.LogInformation("ChargeTag: Edit => charge tag saved: {0} / {1}", ctvm.TagId, ctvm.TagName);
@@ -199,6 +211,7 @@ namespace OCPP.Core.Management.Controllers
                             .Select(tag => tag.UserId)
                             .ToHashSet();
                         ctvm.Users = BuildUserAssignments(dbUsers, assignedUserIds);
+                        ctvm.SelectedUserId = assignedUserIds.Count > 0 ? assignedUserIds.First() : null;
                     }
 
                     string viewName = (!string.IsNullOrEmpty(ctvm.TagId) || Id=="@") ? "ChargeTagDetail" : "ChargeTagList";

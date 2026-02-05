@@ -120,6 +120,9 @@
   <data name="AssignedChargeTags" xml:space="preserve">
     <value>Assigned RFID-Tags</value>
   </data>
+  <data name="NoChargeTagAssigned" xml:space="preserve">
+    <value>No RFID tag assigned</value>
+  </data>
   <data name="AssignedChargePoints" xml:space="preserve">
     <value>Assigned charge points</value>
   </data>
