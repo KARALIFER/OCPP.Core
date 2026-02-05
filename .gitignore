@@ -250,6 +250,11 @@ ServiceFabricBackup/
 *.ldf
 *.ndf
 
+# SQLite files
+*.db
+*.sqlite
+*.sqlite3
+
 # Business Intelligence projects
 *.rdl.data
 *.bim.layout
@@ -338,5 +343,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/artifacts/
+/screenshots/
 /OCPP.Core.Server/Messages_OCPP16/ResetResponse.cs
 /OCPP.Core.Server/Messages_OCPP16/ResetRequest.cs

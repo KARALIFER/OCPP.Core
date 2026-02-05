@@ -44,10 +44,13 @@ namespace OCPP.Core.Management.Controllers
                     return RedirectToAction("Error", new { Id = "" });
                 }
 
-                List<User> dbUsers = DbContext.Users.OrderBy(x => x.Username).ToList();
+                List<UserAccount> dbUsers = DbContext.UserAccounts
+                    .Include(user => user.ChargeTag)
+                    .OrderBy(x => x.LoginName)
+                    .ToList();
                 List<ChargeTag> dbChargeTags = DbContext.ChargeTags.OrderBy(x => x.TagName).ToList();
                 List<ChargePoint> dbChargePoints = DbContext.ChargePoints.OrderBy(x => x.Name).ToList();
-                User currentUser = null;
+                UserAccount currentUser = null;
                 if (!string.IsNullOrEmpty(Id) && Id != "@")
                 {
                     if (int.TryParse(Id, out int userId))
@@ -70,29 +73,64 @@ namespace OCPP.Core.Management.Controllers
                         {
                             errorMsg = _localizer["UserPasswordRequired"].Value;
                         }
-                        else if (dbUsers.Any(user => user.Username.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
+                        else if (dbUsers.Any(user => user.LoginName.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             errorMsg = _localizer["UserNameExists"].Value;
                         }
 
                         if (string.IsNullOrEmpty(errorMsg))
                         {
-                            User newUser = new User
+                            bool useExplicitIds = DbContext.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+                            int nextUserId = 1;
+                            if (useExplicitIds)
                             {
-                                Username = uvm.Username,
+                                nextUserId = (dbUsers.Max(user => (int?)user.UserId) ?? 0) + 1;
+                            }
+
+                            UserAccount newUser = new UserAccount
+                            {
+                                LoginName = uvm.Username,
                                 Password = uvm.Password,
-                                IsAdmin = uvm.IsAdmin
+                                IsAdmin = uvm.IsAdmin,
+                                PublicId = Guid.NewGuid(),
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow
                             };
-                            DbContext.Users.Add(newUser);
+                            if (useExplicitIds)
+                            {
+                                newUser.UserId = nextUserId;
+                            }
+                            DbContext.UserAccounts.Add(newUser);
                             DbContext.SaveChanges();
 
-                            UpdateUserChargeTags(newUser.UserId, uvm.ChargeTags);
+                            string assignmentError = UpdateUserChargeTag(newUser.UserId, uvm.SelectedChargeTagId);
+                            if (!string.IsNullOrEmpty(assignmentError))
+                            {
+                                ViewBag.ErrorMsg = assignmentError;
+                                uvm.UserId = newUser.UserId;
+                                uvm.Users = dbUsers;
+                                uvm.ChargeTags = BuildChargeTagList(dbChargeTags, newUser.UserId);
+                                return View("UserDetail", uvm);
+                            }
+
                             UpdateUserChargePoints(newUser.UserId, uvm.ChargePoints);
-                            DbContext.SaveChanges();
+                            try
+                            {
+                                DbContext.SaveChanges();
+                            }
+                            catch (DbUpdateException dbEx)
+                            {
+                                Logger.LogWarning(dbEx, "User: Error assigning charge tag for new user {0}", newUser.LoginName);
+                                ViewBag.ErrorMsg = _localizer["ChargeTagAssignmentConflict"].Value;
+                                uvm.UserId = newUser.UserId;
+                                uvm.Users = dbUsers;
+                                uvm.ChargeTags = BuildChargeTagList(dbChargeTags, newUser.UserId);
+                                return View("UserDetail", uvm);
+                            }
                         }
                         else
                         {
-                            uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, uvm.ChargeTags);
+                            uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser?.UserId);
                             uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
                             ViewBag.ErrorMsg = errorMsg;
                             return View("UserDetail", uvm);
@@ -102,7 +140,7 @@ namespace OCPP.Core.Management.Controllers
                     {
                         if (Request.Form["action"] == "Delete")
                         {
-                            DbContext.Remove<User>(currentUser);
+                            DbContext.Remove<UserAccount>(currentUser);
                             DbContext.SaveChanges();
                         }
                         else
@@ -111,29 +149,50 @@ namespace OCPP.Core.Management.Controllers
                             {
                                 errorMsg = _localizer["UserNameRequired"].Value;
                             }
-                            else if (dbUsers.Any(user => user.UserId != currentUser.UserId && user.Username.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
+                            else if (dbUsers.Any(user => user.UserId != currentUser.UserId && user.LoginName.Equals(uvm.Username, StringComparison.InvariantCultureIgnoreCase)))
                             {
                                 errorMsg = _localizer["UserNameExists"].Value;
                             }
 
                             if (string.IsNullOrEmpty(errorMsg))
                             {
-                                currentUser.Username = uvm.Username;
+                                currentUser.LoginName = uvm.Username;
                                 if (!string.IsNullOrWhiteSpace(uvm.Password))
                                 {
                                     currentUser.Password = uvm.Password;
                                 }
                                 currentUser.IsAdmin = uvm.IsAdmin;
+                                currentUser.UpdatedAt = DateTime.UtcNow;
                                 DbContext.SaveChanges();
 
-                                UpdateUserChargeTags(currentUser.UserId, uvm.ChargeTags);
+                                string assignmentError = UpdateUserChargeTag(currentUser.UserId, uvm.SelectedChargeTagId);
+                                if (!string.IsNullOrEmpty(assignmentError))
+                                {
+                                    ViewBag.ErrorMsg = assignmentError;
+                                    uvm.UserId = currentUser.UserId;
+                                    uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser.UserId);
+                                    uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
+                                    return View("UserDetail", uvm);
+                                }
                                 UpdateUserChargePoints(currentUser.UserId, uvm.ChargePoints);
-                                DbContext.SaveChanges();
+                                try
+                                {
+                                    DbContext.SaveChanges();
+                                }
+                                catch (DbUpdateException dbEx)
+                                {
+                                    Logger.LogWarning(dbEx, "User: Error assigning charge tag for user {0}", currentUser.LoginName);
+                                    ViewBag.ErrorMsg = _localizer["ChargeTagAssignmentConflict"].Value;
+                                    uvm.UserId = currentUser.UserId;
+                                    uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser.UserId);
+                                    uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
+                                    return View("UserDetail", uvm);
+                                }
                             }
                             else
                             {
                                 uvm.UserId = currentUser.UserId;
-                                uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, uvm.ChargeTags);
+                                uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser.UserId);
                                 uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, uvm.ChargePoints);
                                 ViewBag.ErrorMsg = errorMsg;
                                 return View("UserDetail", uvm);
@@ -153,22 +212,19 @@ namespace OCPP.Core.Management.Controllers
                     if (currentUser != null)
                     {
                         uvm.UserId = currentUser.UserId;
-                        uvm.Username = currentUser.Username;
+                        uvm.Username = currentUser.LoginName;
                         uvm.IsAdmin = currentUser.IsAdmin;
-                        HashSet<string> assignedTags = DbContext.UserChargeTags
-                            .Where(tag => tag.UserId == currentUser.UserId)
-                            .Select(tag => tag.TagId)
-                            .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
-                        uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, assignedTags);
+                        uvm.SelectedChargeTagId = currentUser.ChargeTag?.TagId;
+                        uvm.ChargeTags = BuildChargeTagList(dbChargeTags, currentUser.UserId);
 
                         List<UserChargePoint> userChargePoints = DbContext.UserChargePoints
-                            .Where(point => point.UserId == currentUser.UserId)
+                            .Where(point => point.UserAccountId == currentUser.UserId)
                             .ToList();
                         uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, userChargePoints);
                     }
                     else
                     {
-                        uvm.ChargeTags = BuildChargeTagAssignments(dbChargeTags, new HashSet<string>(StringComparer.InvariantCultureIgnoreCase));
+                        uvm.ChargeTags = BuildChargeTagList(dbChargeTags, null);
                         uvm.ChargePoints = BuildChargePointAssignments(dbChargePoints, new List<UserChargePoint>());
                     }
 
@@ -197,10 +253,8 @@ namespace OCPP.Core.Management.Controllers
                     return RedirectToAction("Error", new { Id = "" });
                 }
 
-                List<ChargeTag> chargeTags = DbContext.UserChargeTags
-                    .Include(tag => tag.ChargeTag)
-                    .Where(tag => tag.UserId == userId.Value)
-                    .Select(tag => tag.ChargeTag)
+                List<ChargeTag> chargeTags = DbContext.ChargeTags
+                    .Where(tag => tag.UserAccountId == userId.Value)
                     .OrderBy(tag => tag.TagName)
                     .ToList();
 
@@ -219,30 +273,12 @@ namespace OCPP.Core.Management.Controllers
             }
         }
 
-        private List<UserChargeTagAssignmentViewModel> BuildChargeTagAssignments(IEnumerable<ChargeTag> chargeTags, IEnumerable<UserChargeTagAssignmentViewModel> selectedAssignments)
+        private List<ChargeTag> BuildChargeTagList(IEnumerable<ChargeTag> chargeTags, int? currentUserId)
         {
-            HashSet<string> selectedTagIds = selectedAssignments == null
-                ? new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-                : selectedAssignments.Where(tag => tag.IsAssigned).Select(tag => tag.TagId).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
-
-            return BuildChargeTagAssignments(chargeTags, selectedTagIds);
-        }
-
-        private List<UserChargeTagAssignmentViewModel> BuildChargeTagAssignments(IEnumerable<ChargeTag> chargeTags, HashSet<string> assignedTagIds)
-        {
-            List<UserChargeTagAssignmentViewModel> assignments = new List<UserChargeTagAssignmentViewModel>();
-
-            foreach (ChargeTag chargeTag in chargeTags)
-            {
-                assignments.Add(new UserChargeTagAssignmentViewModel
-                {
-                    TagId = chargeTag.TagId,
-                    TagName = chargeTag.TagName,
-                    IsAssigned = assignedTagIds.Contains(chargeTag.TagId)
-                });
-            }
-
-            return assignments;
+            return chargeTags
+                .Where(tag => tag.UserAccountId == null || (currentUserId.HasValue && tag.UserAccountId == currentUserId))
+                .OrderBy(tag => tag.TagName)
+                .ToList();
         }
 
         private List<UserChargePointAssignmentViewModel> BuildChargePointAssignments(IEnumerable<ChargePoint> chargePoints, IEnumerable<UserChargePointAssignmentViewModel> selectedAssignments)
@@ -297,41 +333,37 @@ namespace OCPP.Core.Management.Controllers
             return assignments;
         }
 
-        private void UpdateUserChargeTags(int userId, IEnumerable<UserChargeTagAssignmentViewModel> assignments)
+        private string UpdateUserChargeTag(int userId, string selectedTagId)
         {
-            if (assignments == null)
+            ChargeTag existingTag = DbContext.ChargeTags.FirstOrDefault(tag => tag.UserAccountId == userId);
+
+            if (string.IsNullOrWhiteSpace(selectedTagId))
             {
-                return;
-            }
-
-            HashSet<string> assignedTagIds = assignments
-                .Where(tag => tag.IsAssigned)
-                .Select(tag => tag.TagId)
-                .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
-
-            List<UserChargeTag> existingAssignments = DbContext.UserChargeTags
-                .Where(tag => tag.UserId == userId)
-                .ToList();
-
-            foreach (UserChargeTag assignment in existingAssignments)
-            {
-                if (!assignedTagIds.Contains(assignment.TagId))
+                if (existingTag != null)
                 {
-                    DbContext.UserChargeTags.Remove(assignment);
+                    existingTag.UserAccountId = null;
                 }
+                return null;
             }
 
-            foreach (string tagId in assignedTagIds)
+            ChargeTag selectedTag = DbContext.ChargeTags.FirstOrDefault(tag => tag.TagId == selectedTagId);
+            if (selectedTag == null)
             {
-                if (!existingAssignments.Any(tag => tag.TagId.Equals(tagId, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    DbContext.UserChargeTags.Add(new UserChargeTag
-                    {
-                        UserId = userId,
-                        TagId = tagId
-                    });
-                }
+                return _localizer["ChargeTagIdRequired"].Value;
             }
+
+            if (existingTag != null && !string.Equals(existingTag.TagId, selectedTagId, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return _localizer["UserHasChargeTag"].Value;
+            }
+
+            if (selectedTag.UserAccountId.HasValue && selectedTag.UserAccountId != userId)
+            {
+                return _localizer["ChargeTagAlreadyAssigned"].Value;
+            }
+
+            selectedTag.UserAccountId = userId;
+            return null;
         }
 
         private void UpdateUserChargePoints(int userId, IEnumerable<UserChargePointAssignmentViewModel> assignments)
@@ -347,7 +379,7 @@ namespace OCPP.Core.Management.Controllers
                 .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
             List<UserChargePoint> existingAssignments = DbContext.UserChargePoints
-                .Where(point => point.UserId == userId)
+                .Where(point => point.UserAccountId == userId)
                 .ToList();
 
             foreach (UserChargePoint assignment in existingAssignments)
@@ -371,7 +403,7 @@ namespace OCPP.Core.Management.Controllers
                 {
                     DbContext.UserChargePoints.Add(new UserChargePoint
                     {
-                        UserId = userId,
+                        UserAccountId = userId,
                         ChargePointId = chargePointId,
                         IsHidden = isHidden
                     });

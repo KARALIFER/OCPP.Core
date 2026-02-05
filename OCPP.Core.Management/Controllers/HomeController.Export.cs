@@ -121,7 +121,8 @@ namespace OCPP.Core.Management.Controllers
             }
 
             HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
-            HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+            string currentUserTagId = GetCurrentUserChargeTagId();
+            bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
             if (!string.IsNullOrEmpty(Id) && permittedChargePointIds != null && !permittedChargePointIds.Contains(Id))
             {
                 Logger.LogWarning("Export: Access denied to charge point {0} for user {1}", Id, User?.Identity?.Name);
@@ -167,10 +168,10 @@ namespace OCPP.Core.Management.Controllers
             tlvm.ChargeTags = DbContext.ChargeTags
                 .OrderBy(tag => tag.TagName)
                 .ToList();
-            if (permittedChargeTagIds != null)
+            if (!isAdmin)
             {
                 tlvm.ChargeTags = tlvm.ChargeTags
-                    .Where(tag => permittedChargeTagIds.Contains(tag.TagId))
+                    .Where(tag => string.Equals(tag.TagId, currentUserTagId, StringComparison.InvariantCultureIgnoreCase))
                     .ToList();
             }
 
@@ -179,6 +180,11 @@ namespace OCPP.Core.Management.Controllers
 
             if (!string.IsNullOrEmpty(tlvm.CurrentChargePointId))
             {
+                if (!isAdmin && string.IsNullOrEmpty(currentUserTagId))
+                {
+                    return tlvm;
+                }
+
                 Logger.LogTrace("Export: Loading charge point transactions...");
                 tlvm.Transactions = (from t in DbContext.Transactions
                                       join startCT in DbContext.ChargeTags on t.StartTagId equals startCT.TagId into ft_tmp
@@ -188,9 +194,9 @@ namespace OCPP.Core.Management.Controllers
                                       where (t.ChargePointId == tlvm.CurrentChargePointId &&
                                                 t.ConnectorId == tlvm.CurrentConnectorId &&
                                                 t.StartTime >= DateTime.UtcNow.AddDays(-1 * days) &&
-                                                (permittedChargeTagIds == null ||
-                                                 permittedChargeTagIds.Contains(t.StartTagId) ||
-                                                 permittedChargeTagIds.Contains(t.StopTagId)) &&
+                                                (isAdmin ||
+                                                 t.StartTagId == currentUserTagId ||
+                                                 t.StopTagId == currentUserTagId) &&
                                                 (string.IsNullOrEmpty(tlvm.SelectedTagId) ||
                                                  t.StartTagId == tlvm.SelectedTagId ||
                                                  t.StopTagId == tlvm.SelectedTagId))

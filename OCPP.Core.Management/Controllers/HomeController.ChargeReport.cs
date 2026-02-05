@@ -297,7 +297,18 @@ namespace OCPP.Core.Management.Controllers
             // Stop date => use next day and compare with "<" (no clock times needed)
             DateTime dbStopDate = stopDate.Value.AddDays(1).ToUniversalTime();
             HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
-            HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+            string currentUserTagId = GetCurrentUserChargeTagId();
+            bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
+
+            if (!isAdmin && string.IsNullOrEmpty(currentUserTagId))
+            {
+                return new ChargeReportViewModel
+                {
+                    StartDate = startDate.Value,
+                    StopDate = stopDate.Value,
+                    Groups = new List<GroupReport>()
+                };
+            }
 
             // Load transactions with LEFT JOIN charge tags
             var transactions = (from t in DbContext.Transactions
@@ -309,9 +320,9 @@ namespace OCPP.Core.Management.Controllers
                                         t.StartTime <= dbStopDate &&
                                         (!t.StopTime.HasValue || t.StopTime < dbStopDate) &&
                                         (permittedChargePointIds == null || permittedChargePointIds.Contains(t.ChargePointId)) &&
-                                        (permittedChargeTagIds == null ||
-                                         permittedChargeTagIds.Contains(t.StartTagId) ||
-                                         permittedChargeTagIds.Contains(t.StopTagId)))
+                                        (isAdmin ||
+                                         t.StartTagId == currentUserTagId ||
+                                         t.StopTagId == currentUserTagId))
                                  select new TransactionExtended
                                  {
                                      TransactionId = t.TransactionId,
@@ -382,7 +393,8 @@ namespace OCPP.Core.Management.Controllers
             // Stop date => use next day and compare with "<" (no clock times needed)
             DateTime dbStopDate = stopDate.Value.AddDays(1).ToUniversalTime();
             HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
-            HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+            string currentUserTagId = GetCurrentUserChargeTagId();
+            bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
 
             var tlvm = new TransactionListViewModel
             {
@@ -400,6 +412,10 @@ namespace OCPP.Core.Management.Controllers
             }
 
             Logger.LogTrace("ChargeReport: Loading transactions...");
+            if (!isAdmin && string.IsNullOrEmpty(currentUserTagId))
+            {
+                return tlvm;
+            }
             tlvm.Transactions = (from t in DbContext.Transactions
                                  join startCT in DbContext.ChargeTags on t.StartTagId equals startCT.TagId into ft_tmp
                                  from startCT in ft_tmp.DefaultIfEmpty()
@@ -409,9 +425,9 @@ namespace OCPP.Core.Management.Controllers
                                         t.StartTime <= dbStopDate && 
                                         (!t.StopTime.HasValue || t.StopTime < dbStopDate) &&
                                         (permittedChargePointIds == null || permittedChargePointIds.Contains(t.ChargePointId)) &&
-                                        (permittedChargeTagIds == null ||
-                                         permittedChargeTagIds.Contains(t.StartTagId) ||
-                                         permittedChargeTagIds.Contains(t.StopTagId)))
+                                        (isAdmin ||
+                                         t.StartTagId == currentUserTagId ||
+                                         t.StopTagId == currentUserTagId))
                                  select new TransactionExtended
                                  {
                                      TransactionId = t.TransactionId,

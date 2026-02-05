@@ -120,11 +120,17 @@
   <data name="AssignedChargeTags" xml:space="preserve">
     <value>Assigned RFID-Tags</value>
   </data>
+  <data name="AssignedChargeTag" xml:space="preserve">
+    <value>Assigned RFID-Tag</value>
+  </data>
   <data name="AssignedChargePoints" xml:space="preserve">
     <value>Assigned charge points</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="ChargeTagAssignmentHint" xml:space="preserve">
+    <value>To switch tags, first set to “Unassigned”, save, then select a new tag.</value>
   </data>
   <data name="ChargePointHiddenLabel" xml:space="preserve">
     <value>Hide for user</value>
@@ -146,6 +152,9 @@
   </data>
   <data name="NoChargePointsAvailable" xml:space="preserve">
     <value>No charge points available.</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
   </data>
   <data name="RequiredField" xml:space="preserve">
     <value>Required</value>

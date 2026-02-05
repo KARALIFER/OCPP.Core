@@ -147,6 +147,15 @@
   <data name="ChargeTagIdRequired" xml:space="preserve">
     <value>Please enter an RFID number.</value>
   </data>
+  <data name="UserHasChargeTag" xml:space="preserve">
+    <value>User already has an assigned RFID tag. Remove it before selecting a new one.</value>
+  </data>
+  <data name="ChargeTagAlreadyAssigned" xml:space="preserve">
+    <value>The selected RFID tag is already assigned to another user.</value>
+  </data>
+  <data name="ChargeTagAssignmentConflict" xml:space="preserve">
+    <value>RFID assignment conflict. Please reload and try again.</value>
+  </data>
   <data name="Connector" xml:space="preserve">
     <value>Connector</value>
   </data>

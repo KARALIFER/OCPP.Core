@@ -60,6 +60,8 @@ namespace OCPP.Core.Management.Controllers
             {
                 HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
                 HashSet<string> hiddenChargePointIds = GetHiddenChargePointIds();
+                string currentUserTagId = GetCurrentUserChargeTagId();
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 Dictionary<string, ChargePointStatus> dictOnlineStatus = new Dictionary<string, ChargePointStatus>();
                 #region Load online status from OCPP server
                 string serverApiUrl = base.Config.GetValue<string>("ServerApiUrl");
@@ -263,8 +265,26 @@ namespace OCPP.Core.Management.Controllers
                                     {
                                         cpovm.MeterStart = connStatus.MeterStart.Value;
                                         cpovm.MeterStop = connStatus.MeterStop;
+                                        cpovm.CurrentMeter = connStatus.LastMeter;
                                         cpovm.StartTime = connStatus.StartTime;
                                         cpovm.StopTime = connStatus.StopTime;
+
+                                        if (!isAdmin)
+                                        {
+                                            bool isOwnTag = !string.IsNullOrEmpty(currentUserTagId) &&
+                                                (string.Equals(connStatus.StartTagId, currentUserTagId, StringComparison.InvariantCultureIgnoreCase) ||
+                                                 string.Equals(connStatus.StopTagId, currentUserTagId, StringComparison.InvariantCultureIgnoreCase));
+                                            if (!isOwnTag)
+                                            {
+                                                cpovm.ShowDetails = false;
+                                                cpovm.MeterStart = -1;
+                                                cpovm.MeterStop = -1;
+                                                cpovm.CurrentMeter = null;
+                                                cpovm.StartTime = null;
+                                                cpovm.StopTime = null;
+                                                cpovm.CurrentChargeData = null;
+                                            }
+                                        }
 
                                         if (cpovm.ConnectorStatus == ConnectorStatusEnum.Undefined)
                                         {
@@ -276,6 +296,7 @@ namespace OCPP.Core.Management.Controllers
                                     {
                                         cpovm.MeterStart = -1;
                                         cpovm.MeterStop = -1;
+                                        cpovm.CurrentMeter = null;
                                         cpovm.StartTime = null;
                                         cpovm.StopTime = null;
 
@@ -287,7 +308,8 @@ namespace OCPP.Core.Management.Controllers
                                     }
 
                                     // Add current charge data to view model
-                                    if (cpovm.ConnectorStatus == ConnectorStatusEnum.Occupied &&
+                                    if (cpovm.ShowDetails &&
+                                        cpovm.ConnectorStatus == ConnectorStatusEnum.Occupied &&
                                         onlineConnectorStatus != null)
                                     {
                                         string currentCharge = string.Empty;
@@ -312,9 +334,11 @@ namespace OCPP.Core.Management.Controllers
                                     {
                                         cpovm.MeterStart = -1;
                                         cpovm.MeterStop = -1;
+                                        cpovm.CurrentMeter = null;
                                         cpovm.StartTime = null;
                                         cpovm.StopTime = null;
                                         cpovm.CurrentChargeData = null;
+                                        cpovm.ShowDetails = false;
                                         if (cpovm.ConnectorStatus == ConnectorStatusEnum.Undefined)
                                         {
                                             cpovm.ConnectorStatus = ConnectorStatusEnum.Available;

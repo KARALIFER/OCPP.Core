@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Mvc.Localization
+﻿@using System
+@using Microsoft.AspNetCore.Mvc.Localization
 @using OCPP.Core.Management.Models
 @inject IViewLocalizer Localizer
 @model UserViewModel
@@ -48,23 +49,19 @@
     <hr />
     <div class="form-row">
         <div class="col-md-12">
-            <h5>@Localizer["AssignedChargeTags"]</h5>
+            <h5>@Localizer["AssignedChargeTag"]</h5>
             @if (Model.ChargeTags != null && Model.ChargeTags.Count > 0)
             {
-                <div class="list-group">
-                    @for (int index = 0; index < Model.ChargeTags.Count; index++)
+                <select class="form-control" id="SelectedChargeTagId" name="SelectedChargeTagId">
+                    <option value="">@Localizer["Unassigned"]</option>
+                    @foreach (var chargeTag in Model.ChargeTags)
                     {
-                        <div class="list-group-item">
-                            <input type="hidden" name="ChargeTags[@index].TagId" value="@Model.ChargeTags[index].TagId" />
-                            <input type="hidden" name="ChargeTags[@index].TagName" value="@Model.ChargeTags[index].TagName" />
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="ChargeTags[@index].IsAssigned" value="true" @(Model.ChargeTags[index].IsAssigned ? "checked" : "") />
-                                <input type="hidden" name="ChargeTags[@index].IsAssigned" value="false" />
-                                <label class="form-check-label">@Model.ChargeTags[index].TagId - @Model.ChargeTags[index].TagName</label>
-                            </div>
-                        </div>
+                        <option value="@chargeTag.TagId" selected="@(string.Equals(Model.SelectedChargeTagId, chargeTag.TagId, StringComparison.InvariantCultureIgnoreCase))">
+                            @chargeTag.TagId - @chargeTag.TagName
+                        </option>
                     }
-                </div>
+                </select>
+                <small class="form-text text-muted">@Localizer["ChargeTagAssignmentHint"]</small>
             }
             else
             {

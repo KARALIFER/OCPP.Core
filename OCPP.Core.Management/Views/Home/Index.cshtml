@@ -12,12 +12,33 @@
         {
 
             string chargePointName = string.IsNullOrWhiteSpace(cpvm.Name) ? $"{cpvm.ChargePointId}:{cpvm.ConnectorId}" : cpvm.Name;
-            string lastCharge = (cpvm.MeterStart >= 0 && cpvm.MeterStop != null) ? string.Format(Localizer["ChargekWh"].Value, (cpvm.MeterStop - cpvm.MeterStart)) : null;
+            string chargeEnergy = null;
+            if (cpvm.MeterStart >= 0 && cpvm.MeterStop != null)
+            {
+                double energy = cpvm.MeterStop.Value - cpvm.MeterStart;
+                if (energy >= 0)
+                {
+                    chargeEnergy = string.Format(Localizer["ChargekWh"].Value, energy);
+                }
+            }
+            else if (cpvm.MeterStart >= 0 && cpvm.CurrentMeter != null)
+            {
+                double energy = cpvm.CurrentMeter.Value - cpvm.MeterStart;
+                if (energy >= 0)
+                {
+                    chargeEnergy = string.Format(Localizer["ChargekWh"].Value, energy);
+                }
+            }
             string chargeTime = null;
             if (cpvm.StartTime != null && cpvm.StopTime == null)
             {
                 TimeSpan timeSpan = DateTime.UtcNow.Subtract(cpvm.StartTime.Value);
                 chargeTime = string.Format(Localizer["ChargeTime"].Value, (timeSpan.Days*24 + timeSpan.Hours), timeSpan.Minutes);
+            }
+            if (!cpvm.ShowDetails)
+            {
+                chargeEnergy = null;
+                chargeTime = null;
             }
 
             string cpIcon = "fa-plug";
@@ -53,11 +74,11 @@
                         {
                             <p class="card-text">@chargeTime</p>
                         }
-                        else if (!string.IsNullOrEmpty(lastCharge))
+                        @if (!string.IsNullOrEmpty(chargeEnergy))
                         {
-                            <p class="card-text">@lastCharge</p>
+                            <p class="card-text">@chargeEnergy</p>
                         }
-                        else
+                        @if (string.IsNullOrEmpty(chargeTime) && string.IsNullOrEmpty(chargeEnergy))
                         {
                             <p class="card-text">&nbsp;</p>
                         }
@@ -88,4 +109,3 @@
         </div>
     }
 }
-

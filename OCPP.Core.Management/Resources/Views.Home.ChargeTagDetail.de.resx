@@ -141,6 +141,12 @@
   <data name="ChargeTagUsersLabel" xml:space="preserve">
     <value>Zugewiesene Benutzer</value>
   </data>
+  <data name="ChargeTagUserLabel" xml:space="preserve">
+    <value>Zugeordneter Benutzer</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Nicht zugeordnet</value>
+  </data>
   <data name="EditChargeTag" xml:space="preserve">
     <value>RFID-Schlüssel bearbeiten</value>
   </data>

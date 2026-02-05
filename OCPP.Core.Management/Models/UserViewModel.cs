@@ -32,9 +32,11 @@ namespace OCPP.Core.Management.Models
 
         public bool IsAdmin { get; set; }
 
-        public List<User> Users { get; set; }
+        public List<UserAccount> Users { get; set; }
 
-        public List<UserChargeTagAssignmentViewModel> ChargeTags { get; set; }
+        public List<ChargeTag> ChargeTags { get; set; }
+
+        public string SelectedChargeTagId { get; set; }
 
         public List<UserChargePointAssignmentViewModel> ChargePoints { get; set; }
     }

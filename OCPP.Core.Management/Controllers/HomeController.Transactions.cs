@@ -55,7 +55,8 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
-                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+                string currentUserTagId = GetCurrentUserChargeTagId();
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 string ts = Request.Query["t"];
                 int days = 30;
                 if (ts == "2")
@@ -90,16 +91,15 @@ namespace OCPP.Core.Management.Controllers
                 tlvm.ChargeTags = DbContext.ChargeTags
                     .OrderBy(tag => tag.TagName)
                     .ToList();
-                if (permittedChargeTagIds != null)
+                if (!isAdmin)
                 {
                     tlvm.ChargeTags = tlvm.ChargeTags
-                        .Where(tag => permittedChargeTagIds.Contains(tag.TagId))
+                        .Where(tag => string.Equals(tag.TagId, currentUserTagId, StringComparison.InvariantCultureIgnoreCase))
                         .ToList();
                 }
 
-                if (!string.IsNullOrEmpty(tlvm.SelectedTagId) &&
-                    permittedChargeTagIds != null &&
-                    !permittedChargeTagIds.Contains(tlvm.SelectedTagId))
+                if (!isAdmin && !string.IsNullOrEmpty(tlvm.SelectedTagId) &&
+                    !string.Equals(tlvm.SelectedTagId, currentUserTagId, StringComparison.InvariantCultureIgnoreCase))
                 {
                     Logger.LogWarning("Transactions: Access denied to charge tag {0} for user {1}", tlvm.SelectedTagId, User?.Identity?.Name);
                     TempData["ErrMsgKey"] = "AccessDenied";
@@ -140,6 +140,11 @@ namespace OCPP.Core.Management.Controllers
                         return RedirectToAction("Error", new { Id = "" });
                     }
 
+                    if (!isAdmin && string.IsNullOrEmpty(currentUserTagId))
+                    {
+                        return View(tlvm);
+                    }
+
                     Logger.LogTrace("Transactions: Loading charge point transactions...");
                     tlvm.Transactions = (from t in DbContext.Transactions
                                          join startCT in DbContext.ChargeTags on t.StartTagId equals startCT.TagId into ft_tmp
@@ -149,9 +154,9 @@ namespace OCPP.Core.Management.Controllers
                                          where (t.ChargePointId == tlvm.CurrentChargePointId &&
                                                     t.ConnectorId == tlvm.CurrentConnectorId &&
                                                     t.StartTime >= DateTime.UtcNow.AddDays(-1 * days) &&
-                                                    (permittedChargeTagIds == null ||
-                                                     permittedChargeTagIds.Contains(t.StartTagId) ||
-                                                     permittedChargeTagIds.Contains(t.StopTagId)) &&
+                                                    (isAdmin ||
+                                                     t.StartTagId == currentUserTagId ||
+                                                     t.StopTagId == currentUserTagId) &&
                                                     (string.IsNullOrEmpty(tlvm.SelectedTagId) ||
                                                      t.StartTagId == tlvm.SelectedTagId ||
                                                      t.StopTagId == tlvm.SelectedTagId))

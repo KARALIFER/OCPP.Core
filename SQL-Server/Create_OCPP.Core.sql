@@ -18,6 +18,25 @@ CREATE TABLE [dbo].[ChargePoint](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[Users]    Script Date: 20.12.2020 22:54:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Users](
+	[UserId] [int] IDENTITY(1,1) NOT NULL,
+	[Username] [nvarchar](50) NOT NULL,
+	[Password] [nvarchar](100) NOT NULL,
+	[IsAdmin] [bit] NOT NULL,
+	[PublicId] [uniqueidentifier] NOT NULL DEFAULT (NEWID()),
+	[CreatedAt] [datetime2](7) NOT NULL DEFAULT (SYSUTCDATETIME()),
+	[UpdatedAt] [datetime2](7) NOT NULL DEFAULT (SYSUTCDATETIME()),
+ CONSTRAINT [PK_Users] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[ChargeTags]    Script Date: 20.12.2020 22:54:30 ******/
 SET ANSI_NULLS ON
 GO
@@ -25,13 +44,31 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[ChargeTags](
 	[TagId] [nvarchar](50) NOT NULL,
+	[TagUid] [nvarchar](50) NOT NULL,
 	[TagName] [nvarchar](200) NULL,
 	[ParentTagId] [nvarchar](50) NULL,
 	[ExpiryDate] [datetime2](7) NULL,
 	[Blocked] [bit] NULL,
+	[UserAccountId] [int] NULL,
  CONSTRAINT [PK_ChargeKeys] PRIMARY KEY CLUSTERED 
 (
 	[TagId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[UserChargePoints]    Script Date: 20.12.2020 22:54:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[UserChargePoints](
+	[UserId] [int] NOT NULL,
+	[ChargePointId] [nvarchar](100) NOT NULL,
+	[IsHidden] [bit] NOT NULL CONSTRAINT [DF_UserChargePoints_IsHidden] DEFAULT ((0)),
+ CONSTRAINT [PK_UserChargePoints] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC,
+	[ChargePointId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -127,6 +164,36 @@ CREATE UNIQUE NONCLUSTERED INDEX [ChargePoint_Identifier] ON [dbo].[ChargePoint]
 	[ChargePointId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_ChargeTags_TagUid]    Script Date: 20.12.2020 22:54:30 ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_ChargeTags_TagUid] ON [dbo].[ChargeTags]
+(
+	[TagUid] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ChargeTags_UserAccountId]    Script Date: 20.12.2020 22:54:30 ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_ChargeTags_UserAccountId] ON [dbo].[ChargeTags]
+(
+	[UserAccountId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Users_Username]    Script Date: 20.12.2020 22:54:30 ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Users_Username] ON [dbo].[Users]
+(
+	[Username] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Users_PublicId]    Script Date: 20.12.2020 22:54:30 ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Users_PublicId] ON [dbo].[Users]
+(
+	[PublicId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_UserChargePoints_ChargePointId]    Script Date: 20.12.2020 22:54:30 ******/
+CREATE NONCLUSTERED INDEX [IX_UserChargePoints_ChargePointId] ON [dbo].[UserChargePoints]
+(
+	[ChargePointId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_MessageLog_ChargePointId]    Script Date: 20.12.2020 22:54:30 ******/
 CREATE NONCLUSTERED INDEX [IX_MessageLog_ChargePointId] ON [dbo].[MessageLog]
 (
@@ -137,6 +204,24 @@ ALTER TABLE [dbo].[Transactions]  WITH CHECK ADD  CONSTRAINT [FK_Transactions_Ch
 REFERENCES [dbo].[ChargePoint] ([ChargePointId])
 GO
 ALTER TABLE [dbo].[Transactions] CHECK CONSTRAINT [FK_Transactions_ChargePoint]
+GO
+ALTER TABLE [dbo].[ChargeTags]  WITH CHECK ADD  CONSTRAINT [FK_ChargeTags_Users_UserAccountId] FOREIGN KEY([UserAccountId])
+REFERENCES [dbo].[Users] ([UserId])
+ON DELETE SET NULL
+GO
+ALTER TABLE [dbo].[ChargeTags] CHECK CONSTRAINT [FK_ChargeTags_Users_UserAccountId]
+GO
+ALTER TABLE [dbo].[UserChargePoints]  WITH CHECK ADD  CONSTRAINT [FK_UserChargePoints_Users_UserId] FOREIGN KEY([UserId])
+REFERENCES [dbo].[Users] ([UserId])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[UserChargePoints] CHECK CONSTRAINT [FK_UserChargePoints_Users_UserId]
+GO
+ALTER TABLE [dbo].[UserChargePoints]  WITH CHECK ADD  CONSTRAINT [FK_UserChargePoints_ChargePoint_ChargePointId] FOREIGN KEY([ChargePointId])
+REFERENCES [dbo].[ChargePoint] ([ChargePointId])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[UserChargePoints] CHECK CONSTRAINT [FK_UserChargePoints_ChargePoint_ChargePointId]
 GO
 ALTER TABLE [dbo].[Transactions]  WITH CHECK ADD  CONSTRAINT [FK_Transactions_Transactions] FOREIGN KEY([TransactionId])
 REFERENCES [dbo].[Transactions] ([TransactionId])

@@ -57,6 +57,11 @@ namespace OCPP.Core.Management.Models
         public double? MeterStop { get; set; }
 
         /// <summary>
+        /// Latest meter value reported while charging.
+        /// </summary>
+        public double? CurrentMeter { get; set; }
+
+        /// <summary>
         /// Start time of last transaction
         /// </summary>
         public DateTime? StartTime { get; set; }
@@ -80,5 +85,10 @@ namespace OCPP.Core.Management.Models
         /// Details about the current charge process
         /// </summary>
         public string CurrentChargeData { get; set; }
+
+        /// <summary>
+        /// Indicates whether transaction details are visible to the current user.
+        /// </summary>
+        public bool ShowDetails { get; set; } = true;
     }
 }

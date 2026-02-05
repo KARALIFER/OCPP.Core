@@ -17,23 +17,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Collections.Generic;
 
 #nullable disable
 
 namespace OCPP.Core.Database
 {
-    public partial class User
+    public partial class UserAccount
     {
         public int UserId { get; set; }
 
-        public string Username { get; set; }
+        public string LoginName { get; set; }
 
         public string Password { get; set; }
 
         public bool IsAdmin { get; set; }
 
-        public virtual ICollection<UserChargeTag> UserChargeTags { get; set; } = new List<UserChargeTag>();
+        public Guid PublicId { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
+        public virtual ChargeTag ChargeTag { get; set; }
 
         public virtual ICollection<UserChargePoint> UserChargePoints { get; set; } = new List<UserChargePoint>();
     }

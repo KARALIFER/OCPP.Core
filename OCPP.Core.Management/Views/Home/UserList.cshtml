@@ -12,16 +12,18 @@
     <thead>
         <tr>
             <th>@Localizer["UserNameLabel"]</th>
+            <th>@Localizer["UserChargeTagLabel"]</th>
             <th>@Localizer["UserIsAdminLabel"]</th>
         </tr>
     </thead>
     <tbody>
         @if (Model.Users != null)
         {
-            foreach (User user in Model.Users)
+            foreach (UserAccount user in Model.Users)
             {
                 <tr class="table-row" data-href='@Url.Action("User", Constants.HomeController, new { id = user.UserId })'>
-                    <td>@user.Username</td>
+                    <td>@user.LoginName</td>
+                    <td>@(user.ChargeTag != null ? user.ChargeTag.TagName ?? user.ChargeTag.TagId : Localizer["Unassigned"])</td>
                     <td>@(user.IsAdmin ? Localizer["Yes"] : Localizer["No"])</td>
                 </tr>
             }

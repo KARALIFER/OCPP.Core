@@ -142,6 +142,6 @@
     <value>Übersicht</value>
   </data>
   <data name="Users" xml:space="preserve">
-    <value>Benutzer</value>
+    <value>Benutzer ↔ RFID</value>
   </data>
 </root>

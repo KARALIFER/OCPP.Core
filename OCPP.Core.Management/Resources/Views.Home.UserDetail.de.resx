@@ -120,11 +120,17 @@
   <data name="AssignedChargeTags" xml:space="preserve">
     <value>Zugeordnete RFID-Karten</value>
   </data>
+  <data name="AssignedChargeTag" xml:space="preserve">
+    <value>Zugeordnetes RFID-Tag</value>
+  </data>
   <data name="AssignedChargePoints" xml:space="preserve">
     <value>Zugeordnete Ladestationen</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Abbrechen</value>
+  </data>
+  <data name="ChargeTagAssignmentHint" xml:space="preserve">
+    <value>Zum Wechsel zuerst auf „Nicht zugeordnet“ setzen, speichern und danach ein neues Tag wählen.</value>
   </data>
   <data name="ChargePointHiddenLabel" xml:space="preserve">
     <value>Für Benutzer ausblenden</value>
@@ -146,6 +152,9 @@
   </data>
   <data name="NoChargePointsAvailable" xml:space="preserve">
     <value>Keine Ladestationen vorhanden.</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Nicht zugeordnet</value>
   </data>
   <data name="RequiredField" xml:space="preserve">
     <value>Pflichtfeld</value>

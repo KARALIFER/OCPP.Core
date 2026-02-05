@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -94,7 +95,7 @@ namespace OCPP.Core.Management
 
             app.UseStaticFiles();
 
-            EnsureDefaultUsers(app);
+            EnsureDefaultUsers(app, env);
 
             app.UseAuthentication();
             app.UseRouting();
@@ -114,7 +115,7 @@ namespace OCPP.Core.Management
             });
         }
 
-        private void EnsureDefaultUsers(IApplicationBuilder app)
+        private void EnsureDefaultUsers(IApplicationBuilder app, IWebHostEnvironment env)
         {
             using var scope = app.ApplicationServices.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
@@ -122,16 +123,19 @@ namespace OCPP.Core.Management
 
             try
             {
-                dbContext.Database.Migrate();
+                bool isSqlite = dbContext.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+                if (isSqlite && !SqliteTableExists(dbContext, "ChargePoint"))
+                {
+                    BootstrapSqliteSchema(dbContext, env, logger);
+                }
+                else if (!isSqlite || SqliteTableExists(dbContext, "__EFMigrationsHistory_Sqlite"))
+                {
+                    dbContext.Database.Migrate();
+                }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to apply database migrations.");
-                return;
-            }
-
-            if (dbContext.Users.Any())
-            {
                 return;
             }
 
@@ -140,8 +144,10 @@ namespace OCPP.Core.Management
             int nextUserId = 1;
             if (useExplicitIds)
             {
-                nextUserId = (dbContext.Users.Max(user => (int?)user.UserId) ?? 0) + 1;
+                nextUserId = (dbContext.UserAccounts.Max(user => (int?)user.UserId) ?? 0) + 1;
             }
+            var existingUsers = dbContext.UserAccounts
+                .ToDictionary(user => user.LoginName, StringComparer.InvariantCultureIgnoreCase);
             foreach (var userConfig in userConfigs)
             {
                 string username = userConfig.GetValue<string>("Username");
@@ -153,22 +159,81 @@ namespace OCPP.Core.Management
                     continue;
                 }
 
-                var user = new User
+                if (existingUsers.TryGetValue(username, out var existingUser))
                 {
-                    Username = username,
-                    Password = password,
-                    IsAdmin = isAdmin
-                };
-
-                if (useExplicitIds)
-                {
-                    user.UserId = nextUserId++;
+                    existingUser.Password = password;
+                    existingUser.IsAdmin = isAdmin;
+                    if (existingUser.PublicId == Guid.Empty)
+                    {
+                        existingUser.PublicId = Guid.NewGuid();
+                    }
+                    if (existingUser.CreatedAt == default)
+                    {
+                        existingUser.CreatedAt = DateTime.UtcNow;
+                    }
+                    existingUser.UpdatedAt = DateTime.UtcNow;
                 }
+                else
+                {
+                    var user = new UserAccount
+                    {
+                        LoginName = username,
+                        Password = password,
+                        IsAdmin = isAdmin,
+                        PublicId = Guid.NewGuid(),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-                dbContext.Users.Add(user);
+                    if (useExplicitIds)
+                    {
+                        user.UserId = nextUserId++;
+                    }
+
+                    dbContext.UserAccounts.Add(user);
+                }
             }
 
             dbContext.SaveChanges();
+        }
+
+        private static bool SqliteTableExists(OCPPCoreContext dbContext, string tableName)
+        {
+            var connection = dbContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name=$name";
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "$name";
+            parameter.Value = tableName;
+            command.Parameters.Add(parameter);
+
+            return command.ExecuteScalar() != null;
+        }
+
+        private static void BootstrapSqliteSchema(OCPPCoreContext dbContext, IWebHostEnvironment env, ILogger logger)
+        {
+            string scriptPath = Path.Combine(env.ContentRootPath, "..", "SQLite", "OCPP.Core.sqlite.sql");
+            if (!File.Exists(scriptPath))
+            {
+                logger.LogError("SQLite bootstrap script not found at {Path}", scriptPath);
+                return;
+            }
+
+            string script = File.ReadAllText(scriptPath);
+            var connection = dbContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
+            using var command = connection.CreateCommand();
+            command.CommandText = script;
+            command.ExecuteNonQuery();
         }
     }
 }

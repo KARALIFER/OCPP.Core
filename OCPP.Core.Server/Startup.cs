@@ -91,6 +91,19 @@ namespace OCPP.Core.Server
             bool dbMigrate = Configuration.GetValue<bool>("AutoMigrateDB", true);
             if (dbMigrate)
             {
+                bool isSqlite = dbContext.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+                if (isSqlite && !SqliteTableExists(dbContext, "ChargePoint"))
+                {
+                    BootstrapSqliteSchema(dbContext, env, logger);
+                    dbMigrate = false;
+                }
+                else if (isSqlite && !SqliteTableExists(dbContext, "__EFMigrationsHistory_Sqlite"))
+                {
+                    dbMigrate = false;
+                }
+            }
+            if (dbMigrate)
+            {
                 dbContext.Database.Migrate();
             }
 
@@ -104,6 +117,45 @@ namespace OCPP.Core.Server
 
             // Integrate custom OCPP middleware for message processing
             app.UseOCPPMiddleware();
+        }
+
+        private static bool SqliteTableExists(OCPPCoreContext dbContext, string tableName)
+        {
+            var connection = dbContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name=$name";
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "$name";
+            parameter.Value = tableName;
+            command.Parameters.Add(parameter);
+
+            return command.ExecuteScalar() != null;
+        }
+
+        private static void BootstrapSqliteSchema(OCPPCoreContext dbContext, IWebHostEnvironment env, ILogger logger)
+        {
+            string scriptPath = Path.Combine(env.ContentRootPath, "..", "SQLite", "OCPP.Core.sqlite.sql");
+            if (!File.Exists(scriptPath))
+            {
+                logger.LogError("SQLite bootstrap script not found at {Path}", scriptPath);
+                return;
+            }
+
+            string script = File.ReadAllText(scriptPath);
+            var connection = dbContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
+            using var command = connection.CreateCommand();
+            command.CommandText = script;
+            command.ExecuteNonQuery();
         }
     }
 }

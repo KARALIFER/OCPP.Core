@@ -8,13 +8,34 @@ CREATE TABLE IF NOT EXISTS "ChargePoint" (
 	"ClientCertThumb"	TEXT,
 	PRIMARY KEY("ChargePointId")
 );
+CREATE TABLE IF NOT EXISTS "Users" (
+	"UserId"	INTEGER NOT NULL UNIQUE,
+	"Username"	TEXT NOT NULL UNIQUE,
+	"Password"	TEXT NOT NULL,
+	"IsAdmin"	INTEGER NOT NULL,
+	"PublicId"	TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))),
+	"CreatedAt"	TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+	"UpdatedAt"	TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+	PRIMARY KEY("UserId" AUTOINCREMENT)
+);
 CREATE TABLE IF NOT EXISTS "ChargeTags" (
 	"TagId"	TEXT NOT NULL UNIQUE,
+	"TagUid"	TEXT NOT NULL,
 	"TagName"	TEXT,
 	"ParentTagId"	TEXT,
 	"ExpiryDate"	TEXT,
 	"Blocked"	INTEGER,
-	PRIMARY KEY("TagId")
+	"UserAccountId"	INTEGER,
+	PRIMARY KEY("TagId"),
+	FOREIGN KEY("UserAccountId") REFERENCES "Users"("UserId") ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS "UserChargePoints" (
+	"UserId"	INTEGER NOT NULL,
+	"ChargePointId"	TEXT NOT NULL,
+	"IsHidden"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("UserId","ChargePointId"),
+	FOREIGN KEY("UserId") REFERENCES "Users"("UserId") ON DELETE CASCADE,
+	FOREIGN KEY("ChargePointId") REFERENCES "ChargePoint"("ChargePointId") ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS "MessageLog" (
 	"LogId"	INTEGER NOT NULL UNIQUE,
@@ -71,6 +92,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS "PK_ChargePointId" ON "ChargePoint" (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "PK_ChargeTagId" ON "ChargeTags" (
 	"TagId"	ASC
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_ChargeTags_TagUid" ON "ChargeTags" (
+	"TagUid"	ASC
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_ChargeTags_UserAccountId" ON "ChargeTags" (
+	"UserAccountId"	ASC
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Users_Username" ON "Users" (
+	"Username"	ASC
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Users_PublicId" ON "Users" (
+	"PublicId"	ASC
+);
+CREATE INDEX IF NOT EXISTS "IX_UserChargePoints_ChargePointId" ON "UserChargePoints" (
+	"ChargePointId"	ASC
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "PK_TransactionId" ON "Transactions" (
 	"TransactionId"

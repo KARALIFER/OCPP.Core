@@ -129,11 +129,17 @@
   <data name="UserIsAdminLabel" xml:space="preserve">
     <value>Administrator</value>
   </data>
+  <data name="UserChargeTagLabel" xml:space="preserve">
+    <value>RFID-Tag</value>
+  </data>
   <data name="UserList" xml:space="preserve">
-    <value>Benutzer</value>
+    <value>Benutzer ↔ RFID Zuordnung</value>
   </data>
   <data name="UserNameLabel" xml:space="preserve">
     <value>Benutzername</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Nicht zugeordnet</value>
   </data>
   <data name="Yes" xml:space="preserve">
     <value>Ja</value>

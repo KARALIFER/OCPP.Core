@@ -135,6 +135,12 @@
   <data name="TagName" xml:space="preserve">
     <value>Bezeichnung</value>
   </data>
+  <data name="AssignedUser" xml:space="preserve">
+    <value>Zugeordneter Benutzer</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Nicht zugeordnet</value>
+  </data>
   <data name="Title" xml:space="preserve">
     <value>Management</value>
   </data>

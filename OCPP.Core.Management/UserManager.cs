@@ -46,7 +46,7 @@ namespace OCPP.Core.Management
         {
             try
             {
-                User dbUser = await _dbContext.Users.FirstOrDefaultAsync(dbUser => dbUser.Username == user.Username);
+                UserAccount dbUser = await _dbContext.UserAccounts.FirstOrDefaultAsync(dbUser => dbUser.LoginName == user.Username);
                 if (dbUser != null && dbUser.Password == user.Password)
                 {
                     user.UserId = dbUser.UserId;

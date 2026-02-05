@@ -141,6 +141,12 @@
   <data name="ChargeTagUsersLabel" xml:space="preserve">
     <value>Assigned users</value>
   </data>
+  <data name="ChargeTagUserLabel" xml:space="preserve">
+    <value>Assigned user</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
+  </data>
   <data name="EditChargeTag" xml:space="preserve">
     <value>Edit RFID-Tag</value>
   </data>
