@@ -186,6 +186,7 @@
                 <th class="th-sm">@Localizer["StopTag"]</th>
                 <th class="th-sm">@Localizer["StopMeter"]</th>
                 <th class="th-sm">@Localizer["ChargeSum"]</th>
+                <th class="th-sm">@Localizer["Power-kW"]</th>
             </tr>
         </thead>
         <tbody>
@@ -202,6 +203,7 @@
                         <td>@(string.IsNullOrEmpty(t.StopTagName) ? t.StopTagId : t.StopTagName)</td>
                         <td>@((t.MeterStop != null) ? string.Format("{0:0.0##}", t.MeterStop) : string.Empty)</td>
                         <td>@((t.MeterStop != null) ? string.Format("{0:0.0##}", (t.MeterStop - t.MeterStart)) : string.Empty)</td>
+                        <td>@(t.AveragePowerKw.HasValue ? string.Format("{0:0.0##}", t.AveragePowerKw) : string.Empty)</td>
                     </tr>
                 }
             }

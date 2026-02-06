@@ -126,6 +126,12 @@
   <data name="ChargeReportTag" xml:space="preserve">
     <value>RFID-Karte</value>
   </data>
+  <data name="ChargePointId" xml:space="preserve">
+    <value>Ladestation</value>
+  </data>
+  <data name="Connector" xml:space="preserve">
+    <value>Anschluss</value>
+  </data>
   <data name="Energy-kWh" xml:space="preserve">
     <value>Energie (kWh)</value>
   </data>
@@ -153,6 +159,9 @@
   <data name="NoChargeTagAssigned" xml:space="preserve">
     <value>Es ist kein RFID-Tag für Ihr Konto zugewiesen.</value>
   </data>
+  <data name="Power-kW" xml:space="preserve">
+    <value>Leistung (kW)</value>
+  </data>
   <data name="PreviousMonth" xml:space="preserve">
     <value>Letzter Monat</value>
   </data>
@@ -168,8 +177,14 @@
   <data name="StartDate" xml:space="preserve">
     <value>Von:</value>
   </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>Startzeit</value>
+  </data>
   <data name="StopDate" xml:space="preserve">
     <value>bis:</value>
+  </data>
+  <data name="StopTime" xml:space="preserve">
+    <value>Endzeit</value>
   </data>
   <data name="Submit" xml:space="preserve">
     <value>Laden</value>
