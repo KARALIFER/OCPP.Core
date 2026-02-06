@@ -40,7 +40,7 @@ namespace OCPP.Core.Management.Services
             DateTime dbStopDate = range.StopDate.AddDays(1).ToUniversalTime();
 
             var transactionQuery = _dbContext.Transactions.AsQueryable();
-            if (!isAdmin && permittedChargePointIds != null)
+            if (!isAdmin && permittedChargePointIds != null && permittedChargePointIds.Count > 0)
             {
                 transactionQuery = transactionQuery.Where(t => permittedChargePointIds.Contains(t.ChargePointId));
             }
@@ -129,7 +129,7 @@ namespace OCPP.Core.Management.Services
 
             _logger.LogTrace("ChargeReport: Loading charge points and connectors...");
             tlvm.ConnectorStatuses = _dbContext.ConnectorStatuses.Include(cs => cs.ChargePoint).ToList();
-            if (permittedChargePointIds != null && !isAdmin)
+            if (permittedChargePointIds != null && permittedChargePointIds.Count > 0 && !isAdmin)
             {
                 tlvm.ConnectorStatuses = tlvm.ConnectorStatuses
                     .Where(connector => permittedChargePointIds.Contains(connector.ChargePointId))
@@ -137,7 +137,7 @@ namespace OCPP.Core.Management.Services
             }
 
             var transactionQuery = _dbContext.Transactions.AsQueryable();
-            if (permittedChargePointIds != null && !isAdmin)
+            if (permittedChargePointIds != null && permittedChargePointIds.Count > 0 && !isAdmin)
             {
                 transactionQuery = transactionQuery.Where(t => permittedChargePointIds.Contains(t.ChargePointId));
             }
@@ -190,7 +190,7 @@ namespace OCPP.Core.Management.Services
                 {
                     var tagScopedQuery = _dbContext.Transactions
                         .Where(t => permittedChargeTagIds.Contains(t.StartTagId) || permittedChargeTagIds.Contains(t.StopTagId));
-                    if (permittedChargePointIds != null)
+                    if (permittedChargePointIds != null && permittedChargePointIds.Count > 0)
                     {
                         tagScopedQuery = tagScopedQuery.Where(t => permittedChargePointIds.Contains(t.ChargePointId));
                     }
