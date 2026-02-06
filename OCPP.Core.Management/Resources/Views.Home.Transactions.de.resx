@@ -123,6 +123,9 @@
   <data name="ChargeSum" xml:space="preserve">
     <value>Geladen</value>
   </data>
+  <data name="Power-kW" xml:space="preserve">
+    <value>Leistung (kW)</value>
+  </data>
   <data name="Connector" xml:space="preserve">
     <value>Ladestation/Anschluss</value>
   </data>

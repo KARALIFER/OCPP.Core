@@ -25,5 +25,6 @@ namespace OCPP.Core.Database
         public virtual string StartTagParentId { get; set; }
         public virtual string StopTagName { get; set; }
         public virtual string StopTagParentId { get; set; }
+        public double? AveragePowerKw { get; set; }
     }
 }

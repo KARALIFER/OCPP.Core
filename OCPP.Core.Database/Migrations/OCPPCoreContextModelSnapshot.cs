@@ -259,8 +259,7 @@ namespace OCPP.Core.Database.Migrations
                     b.HasIndex("TagId")
                         .IsUnique();
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("UserChargeTags", (string)null);
                 });

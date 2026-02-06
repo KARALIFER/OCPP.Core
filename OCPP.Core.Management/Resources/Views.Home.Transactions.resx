@@ -123,6 +123,9 @@
   <data name="ChargeSum" xml:space="preserve">
     <value>Charged</value>
   </data>
+  <data name="Power-kW" xml:space="preserve">
+    <value>Power (kW)</value>
+  </data>
   <data name="Connector" xml:space="preserve">
     <value>Charge point/Connector</value>
   </data>

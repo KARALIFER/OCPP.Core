@@ -39,6 +39,20 @@ namespace OCPP.Core.Management.Services
             DateTime dbStartDate = range.StartDate.ToUniversalTime();
             DateTime dbStopDate = range.StopDate.AddDays(1).ToUniversalTime();
 
+            var connectorStatuses = _dbContext.ConnectorStatuses
+                .Include(cs => cs.ChargePoint)
+                .ToList();
+            if (permittedChargePointIds != null && permittedChargePointIds.Count > 0 && !isAdmin)
+            {
+                connectorStatuses = connectorStatuses
+                    .Where(connector => permittedChargePointIds.Contains(connector.ChargePointId))
+                    .ToList();
+            }
+
+            var connectorLookup = connectorStatuses.ToDictionary(
+                cs => (cs.ChargePointId, cs.ConnectorId),
+                cs => cs);
+
             var transactionQuery = _dbContext.Transactions.AsQueryable();
             if (!isAdmin && permittedChargePointIds != null && permittedChargePointIds.Count > 0)
             {
@@ -100,7 +114,11 @@ namespace OCPP.Core.Management.Services
                                     {
                                         TransactionId = t.TransactionId,
                                         ChargePointId = t.ChargePointId,
+                                        ChargePointName = connectorLookup.TryGetValue((t.ChargePointId, t.ConnectorId), out var connector)
+                                            ? connector.ChargePoint?.Name
+                                            : null,
                                         ConnectorId = t.ConnectorId,
+                                        ConnectorName = connector?.ConnectorName,
                                         StartTagId = string.IsNullOrEmpty(t.StartTagName) ? t.StartTagId : t.StartTagName,
                                         StartTime = t.StartTime,
                                         MeterStart = t.MeterStart,
@@ -108,7 +126,8 @@ namespace OCPP.Core.Management.Services
                                         StopTagId = string.IsNullOrEmpty(t.StopTagName) ? t.StopTagId : t.StopTagName,
                                         StopTime = t.StopTime,
                                         MeterStop = t.MeterStop,
-                                        StopReason = t.StopReason
+                                        StopReason = t.StopReason,
+                                        AveragePowerKw = CalculateAveragePowerKw(t)
                                     }).ToList()
                                 }).ToList()
                     }).ToList()
@@ -215,6 +234,42 @@ namespace OCPP.Core.Management.Services
         private void LoggerTrace(string action, DateTime? startDate, DateTime? stopDate)
         {
             _logger.LogTrace("ChargeReportService: {Action}({Start}, {Stop})", action, startDate?.ToString("s"), stopDate?.ToString("s"));
+        }
+
+        private double? CalculateAveragePowerKw(TransactionExtended transaction)
+        {
+            if (!transaction.MeterStop.HasValue || !transaction.StopTime.HasValue)
+            {
+                return null;
+            }
+
+            double energyKwh = transaction.MeterStop.Value - transaction.MeterStart;
+            if (energyKwh < 0)
+            {
+                _logger.LogWarning("ChargeReportService: Negative energy for transaction {TransactionId}", transaction.TransactionId);
+                return null;
+            }
+
+            double durationHours = (transaction.StopTime.Value - transaction.StartTime).TotalHours;
+            if (durationHours <= 0)
+            {
+                _logger.LogWarning("ChargeReportService: Invalid duration for transaction {TransactionId}", transaction.TransactionId);
+                return null;
+            }
+
+            double powerKw = energyKwh / durationHours;
+            if (double.IsNaN(powerKw) || double.IsInfinity(powerKw) || powerKw < 0)
+            {
+                _logger.LogWarning("ChargeReportService: Invalid power for transaction {TransactionId}", transaction.TransactionId);
+                return null;
+            }
+
+            if (powerKw > 1000)
+            {
+                _logger.LogWarning("ChargeReportService: Unusually high power {PowerKw}kW for transaction {TransactionId}", powerKw, transaction.TransactionId);
+            }
+
+            return powerKw;
         }
     }
 }

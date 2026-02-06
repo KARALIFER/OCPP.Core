@@ -27,7 +27,9 @@ namespace OCPP.Core.Management.Models
     {
         public int TransactionId { get; set; }
         public string ChargePointId { get; set; }
+        public string ChargePointName { get; set; }
         public int ConnectorId { get; set; }
+        public string ConnectorName { get; set; }
         public string StartTagId { get; set; }
         public DateTime StartTime { get; set; }
         public double MeterStart { get; set; }
@@ -36,6 +38,7 @@ namespace OCPP.Core.Management.Models
         public DateTime? StopTime { get; set; }
         public double? MeterStop { get; set; }
         public string StopReason { get; set; }
+        public double? AveragePowerKw { get; set; }
         public double? Energy => MeterStop.HasValue ? MeterStop.Value - MeterStart : (double?)null;
     }
 }

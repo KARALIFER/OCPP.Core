@@ -17,8 +17,7 @@ namespace OCPP.Core.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_UserChargeTags_UserId",
                 table: "UserChargeTags",
-                column: "UserId",
-                unique: true);
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserChargeTags_TagId",
@@ -42,6 +41,12 @@ namespace OCPP.Core.Database.Migrations
                 name: "IX_UserChargeTags_TagId",
                 table: "UserChargeTags",
                 column: "TagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserChargeTags_UserId",
+                table: "UserChargeTags",
+                column: "UserId",
+                unique: true);
         }
     }
 }

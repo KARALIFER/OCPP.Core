@@ -163,8 +163,7 @@ namespace OCPP.Core.Database
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.HasIndex(e => e.UserId)
-                    .IsUnique();
+                entity.HasIndex(e => e.UserId);
 
                 entity.HasIndex(e => e.TagId)
                     .IsUnique();
