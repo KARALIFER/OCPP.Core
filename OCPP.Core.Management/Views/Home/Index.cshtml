@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using OCPP.Core.Management
 @model OverviewViewModel
 @inject IViewLocalizer Localizer
 @{
@@ -7,6 +8,7 @@
 <br />
 @if (Model != null)
 {
+    bool canNavigate = User != null && User.IsInRole(Constants.AdminRoleName);
     <div class="tilegrid">
         @foreach (ChargePointsOverviewViewModel cpvm in Model.ChargePoints)
         {
@@ -57,29 +59,58 @@
             }
 
             <div class="card border-secondary" style="max-width: 18rem;">
-                <a href="~/Home/Transactions/@Uri.EscapeDataString(cpvm.ChargePointId)/@cpvm.ConnectorId" class="text-decoration-none">
-                    <div class="card-header @cpColor">
-                        <i class="fas @cpIcon fa-2x"></i> @chargePointName
-                    </div>
-                    <div class="card-body text-secondary">
-                        <h5 class="card-title">@cpTitle</h5>
-                        <p class="card-text">@(!string.IsNullOrEmpty(chargeDetails) ? chargeDetails : "\u00a0")</p>
-                    </div>
-                    @if (Model.ServerConnection)
-                    {
-                        <div class="card-footer text-muted d-flex justify-content-between">
-                            <div>@cpvm.CurrentChargeData</div>
-                            @if (cpvm.Online)
-                            {
-                                <div><i class="fas fa-link" title="@Localizer["ChargePointOnline"]"></i></div>
-                            }
-                            else
-                            {
-                                <div><i class="fas fa-unlink" title="@Localizer["ChargePointOffline"]"></i></div>
-                            }
+                @if (canNavigate)
+                {
+                    <a href="~/Home/Transactions/@Uri.EscapeDataString(cpvm.ChargePointId)/@cpvm.ConnectorId" class="text-decoration-none">
+                        <div class="card-header @cpColor">
+                            <i class="fas @cpIcon fa-2x"></i> @chargePointName
                         </div>
-                    }
-                </a>
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">@cpTitle</h5>
+                            <p class="card-text">@(!string.IsNullOrEmpty(chargeDetails) ? chargeDetails : "\u00a0")</p>
+                        </div>
+                        @if (Model.ServerConnection)
+                        {
+                            <div class="card-footer text-muted d-flex justify-content-between">
+                                <div>@cpvm.CurrentChargeData</div>
+                                @if (cpvm.Online)
+                                {
+                                    <div><i class="fas fa-link" title="@Localizer["ChargePointOnline"]"></i></div>
+                                }
+                                else
+                                {
+                                    <div><i class="fas fa-unlink" title="@Localizer["ChargePointOffline"]"></i></div>
+                                }
+                            </div>
+                        }
+                    </a>
+                }
+                else
+                {
+                    <div class="text-decoration-none">
+                        <div class="card-header @cpColor">
+                            <i class="fas @cpIcon fa-2x"></i> @chargePointName
+                        </div>
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">@cpTitle</h5>
+                            <p class="card-text">@(!string.IsNullOrEmpty(chargeDetails) ? chargeDetails : "\u00a0")</p>
+                        </div>
+                        @if (Model.ServerConnection)
+                        {
+                            <div class="card-footer text-muted d-flex justify-content-between">
+                                <div>@cpvm.CurrentChargeData</div>
+                                @if (cpvm.Online)
+                                {
+                                    <div><i class="fas fa-link" title="@Localizer["ChargePointOnline"]"></i></div>
+                                }
+                                else
+                                {
+                                    <div><i class="fas fa-unlink" title="@Localizer["ChargePointOffline"]"></i></div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         }
     </div>

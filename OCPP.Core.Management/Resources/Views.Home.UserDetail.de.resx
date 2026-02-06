@@ -120,6 +120,9 @@
   <data name="AssignedChargeTags" xml:space="preserve">
     <value>Zugeordnete RFID-Karten</value>
   </data>
+  <data name="NoChargeTagAssigned" xml:space="preserve">
+    <value>Keine RFID-Karte zugewiesen</value>
+  </data>
   <data name="AssignedChargePoints" xml:space="preserve">
     <value>Zugeordnete Ladestationen</value>
   </data>

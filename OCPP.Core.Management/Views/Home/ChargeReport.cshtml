@@ -42,8 +42,16 @@
     </div>
 </form>
 <br />
-@if (Model.Groups.Count == 0)
+@if (!Model.HasAssignedChargeTag)
+{
+    <div class="alert alert-info" role="alert">
+        @Localizer["NoChargeTagAssigned"]
+    </div>
+}
+else if (Model.Groups.Count == 0)
+{
     @Localizer["NoData"]
+}
 else
 {
     <p>&nbsp;</p>

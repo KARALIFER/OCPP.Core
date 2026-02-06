@@ -150,6 +150,9 @@
   <data name="NoData" xml:space="preserve">
     <value>- No data -</value>
   </data>
+  <data name="NoChargeTagAssigned" xml:space="preserve">
+    <value>No RFID tag is assigned to your account.</value>
+  </data>
   <data name="PreviousMonth" xml:space="preserve">
     <value>Previous month</value>
   </data>

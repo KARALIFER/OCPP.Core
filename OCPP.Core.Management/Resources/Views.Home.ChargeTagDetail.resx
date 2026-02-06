@@ -138,6 +138,9 @@
   <data name="ChargeTagUsersEmpty" xml:space="preserve">
     <value>No users available</value>
   </data>
+  <data name="ChargeTagUserUnassigned" xml:space="preserve">
+    <value>No user assigned</value>
+  </data>
   <data name="ChargeTagUsersLabel" xml:space="preserve">
     <value>Assigned users</value>
   </data>
