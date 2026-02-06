@@ -71,21 +71,20 @@ namespace OCPP.Core.Management.Controllers
                             .Select(tag => tag.TagId)
                             .ToList();
                     }
-                    if (selectedTagIds.Count > 1)
+                    if (selectedTagIds.Count > 0)
                     {
-                        errorMsg = _localizer["UserAlreadyHasChargeTag"].Value;
-                    }
-                    else if (selectedTagIds.Count == 1)
-                    {
-                        string tagId = selectedTagIds[0];
                         int? currentUserId = currentUser?.UserId;
-                        int? existingOwnerId = DbContext.UserChargeTags
-                            .Where(tag => tag.TagId == tagId)
-                            .Select(tag => (int?)tag.UserId)
-                            .FirstOrDefault();
-                        if (existingOwnerId.HasValue && (!currentUserId.HasValue || existingOwnerId.Value != currentUserId.Value))
+                        foreach (string tagId in selectedTagIds)
                         {
-                            errorMsg = _localizer["ChargeTagAlreadyAssigned"].Value;
+                            int? existingOwnerId = DbContext.UserChargeTags
+                                .Where(tag => tag.TagId == tagId)
+                                .Select(tag => (int?)tag.UserId)
+                                .FirstOrDefault();
+                            if (existingOwnerId.HasValue && (!currentUserId.HasValue || existingOwnerId.Value != currentUserId.Value))
+                            {
+                                errorMsg = _localizer["ChargeTagAlreadyAssigned"].Value;
+                                break;
+                            }
                         }
                     }
 
