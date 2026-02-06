@@ -135,6 +135,9 @@
   <data name="Charging" xml:space="preserve">
     <value>Charging</value>
   </data>
+  <data name="Occupied" xml:space="preserve">
+    <value>Occupied</value>
+  </data>
   <data name="Faulted" xml:space="preserve">
     <value>Faulted</value>
   </data>

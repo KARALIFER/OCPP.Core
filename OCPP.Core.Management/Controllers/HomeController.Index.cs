@@ -31,21 +31,25 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OCPP.Core.Database;
 using OCPP.Core.Management.Models;
+using OCPP.Core.Management.Services;
 
 namespace OCPP.Core.Management.Controllers
 {
     public partial class HomeController : BaseController
     {
         private readonly IStringLocalizer<HomeController> _localizer;
+        private readonly IChargeReportService _chargeReportService;
 
         public HomeController(
             IUserManager userManager,
             IStringLocalizer<HomeController> localizer,
+            IChargeReportService chargeReportService,
             ILoggerFactory loggerFactory,
             IConfiguration config,
             OCPPCoreContext dbContext) : base(userManager, loggerFactory, config, dbContext)
         {
             _localizer = localizer;
+            _chargeReportService = chargeReportService;
             Logger = loggerFactory.CreateLogger<HomeController>();
         }
 
@@ -295,6 +299,7 @@ namespace OCPP.Core.Management.Controllers
                                     {
                                         isOwnChargeSession = permittedChargeTagIds.Contains(connStatus.StartTagId);
                                     }
+                                    cpovm.IsOwnChargeSession = isOwnChargeSession;
 
                                     // Add current charge data to view model
                                     if (cpovm.ConnectorStatus == ConnectorStatusEnum.Occupied &&
@@ -357,6 +362,7 @@ namespace OCPP.Core.Management.Controllers
                             cpovm.Comment = cp.Comment;
                             cpovm.Online = cpOnlineStatus != null;
                             cpovm.ConnectorStatus = ConnectorStatusEnum.Undefined;
+                            cpovm.IsOwnChargeSession = true;
                             if (!isPermittedChargePoint)
                             {
                                 cpovm.MeterStart = -1;

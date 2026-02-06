@@ -135,6 +135,9 @@
   <data name="Charging" xml:space="preserve">
     <value>Ladevorgang</value>
   </data>
+  <data name="Occupied" xml:space="preserve">
+    <value>Belegt</value>
+  </data>
   <data name="Faulted" xml:space="preserve">
     <value>Defekt</value>
   </data>
