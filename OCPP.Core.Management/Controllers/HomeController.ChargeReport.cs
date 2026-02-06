@@ -298,6 +298,18 @@ namespace OCPP.Core.Management.Controllers
             DateTime dbStopDate = stopDate.Value.AddDays(1).ToUniversalTime();
             HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
             HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+            bool hasAssignedChargeTag = permittedChargeTagIds == null || permittedChargeTagIds.Count > 0;
+
+            if (!hasAssignedChargeTag)
+            {
+                return new ChargeReportViewModel
+                {
+                    StartDate = startDate.Value,
+                    StopDate = stopDate.Value,
+                    HasAssignedChargeTag = false,
+                    Groups = new List<GroupReport>()
+                };
+            }
 
             // Load transactions with LEFT JOIN charge tags
             var transactions = (from t in DbContext.Transactions
@@ -338,6 +350,7 @@ namespace OCPP.Core.Management.Controllers
             {
                 StartDate = startDate.Value,
                 StopDate = stopDate.Value,
+                HasAssignedChargeTag = true,
                 Groups = transactions
                     .GroupBy(t => t.StartTagParentId)
                     .OrderBy(g => g.Key) // Order groups by name

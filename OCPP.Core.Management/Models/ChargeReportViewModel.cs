@@ -7,6 +7,7 @@ namespace OCPP.Core.Management.Models
     {
         public DateTime StartDate { get; set; }
         public DateTime StopDate { get; set; }
+        public bool HasAssignedChargeTag { get; set; }
         public List<GroupReport> Groups { get; set; }
     }
 
