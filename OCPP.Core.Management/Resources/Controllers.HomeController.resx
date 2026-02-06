@@ -159,6 +159,9 @@
   <data name="Energy-kWh" xml:space="preserve">
     <value>Energy (kWh)</value>
   </data>
+  <data name="Power-kW" xml:space="preserve">
+    <value>Power (kW)</value>
+  </data>
   <data name="ErrorOCPPServer" xml:space="preserve">
     <value>No current status could be retrieved from the OCPP server.</value>
   </data>

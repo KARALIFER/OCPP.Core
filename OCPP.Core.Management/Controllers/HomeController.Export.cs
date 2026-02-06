@@ -216,6 +216,15 @@ namespace OCPP.Core.Management.Controllers
                                         .OrderByDescending(t => t.TransactionId)
                                         .AsNoTracking()
                                         .ToList();
+
+                foreach (TransactionExtended transaction in tlvm.Transactions)
+                {
+                    transaction.AveragePowerKw = CalculateAveragePowerKw(
+                        transaction.MeterStart,
+                        transaction.MeterStop,
+                        transaction.StartTime,
+                        transaction.StopTime);
+                }
             }
 
             return tlvm;
@@ -234,6 +243,7 @@ namespace OCPP.Core.Management.Controllers
             worksheet.Cell(1, 6).Value = _localizer["StopTag"].ToString();
             worksheet.Cell(1, 7).Value = _localizer["StopMeter"].ToString();
             worksheet.Cell(1, 8).Value = _localizer["ChargeSum"].ToString();
+            worksheet.Cell(1, 9).Value = _localizer["Power-kW"].ToString();
 
             if (tlvm?.Transactions != null)
             {
@@ -251,6 +261,10 @@ namespace OCPP.Core.Management.Controllers
                     {
                         worksheet.Cell(row, 7).SetValue(t.MeterStop);
                         worksheet.Cell(row, 8).SetValue(t.MeterStop - t.MeterStart);
+                    }
+                    if (t.AveragePowerKw.HasValue)
+                    {
+                        worksheet.Cell(row, 9).SetValue(t.AveragePowerKw.Value);
                     }
 
                     row++;

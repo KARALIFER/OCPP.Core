@@ -118,5 +118,41 @@ namespace OCPP.Core.Management.Controllers
                 .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
         }
 
+        protected double? CalculateAveragePowerKw(double meterStart, double? meterStop, DateTime startTime, DateTime? stopTime)
+        {
+            if (!meterStop.HasValue || !stopTime.HasValue)
+            {
+                return null;
+            }
+
+            double energyKwh = meterStop.Value - meterStart;
+            if (energyKwh < 0)
+            {
+                Logger?.LogWarning("AveragePowerKw: Negative energy calculated (Start={Start}, Stop={Stop})", meterStart, meterStop);
+                return null;
+            }
+
+            double durationHours = (stopTime.Value - startTime).TotalHours;
+            if (durationHours <= 0)
+            {
+                Logger?.LogWarning("AveragePowerKw: Invalid duration (Start={Start}, Stop={Stop})", startTime, stopTime);
+                return null;
+            }
+
+            double powerKw = energyKwh / durationHours;
+            if (double.IsNaN(powerKw) || double.IsInfinity(powerKw) || powerKw < 0)
+            {
+                Logger?.LogWarning("AveragePowerKw: Invalid power calculated (Power={Power})", powerKw);
+                return null;
+            }
+
+            if (powerKw > 1000)
+            {
+                Logger?.LogWarning("AveragePowerKw: Unusually high power calculated (Power={Power})", powerKw);
+            }
+
+            return powerKw;
+        }
+
     }
 }

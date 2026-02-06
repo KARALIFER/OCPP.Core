@@ -47,11 +47,11 @@ OCPP V2.0 and V2.1:
 * ClearChargingProfile
 
 ## Management Web-UI
-The Web-UI is **localized in English and German**. It has an overview page with all charge stations and their availabilty.
+The Web-UI is **localized in English and German**. It has an overview page with all charge stations and their availability.
 
 ![Overview](images/Overview.png)
 
-Every charge point (or connector!) is displayed as a tile with status information. If a car is charging the tile is red and shows the duration. If the charge station sends data about the current power and state of charge (SoC) itis displayed in the footer of the tile. Our KEBA devices e.g. are only sending the main meter value :-(
+Every charge point (or connector!) is displayed as a tile with status information. If a car is charging the tile is red and shows the duration. If the charge station sends data about the current power and state of charge (SoC) it is displayed in the footer of the tile. Our KEBA devices e.g. are only sending the main meter value :-(
 
 ![Charging details](images/ChargingDetails.png)
 
@@ -77,8 +77,8 @@ This results in different scenarios for displaying charge points:
 If a connector has a name specified this name overrides the charge point name or default scheme (see above). This allows you to define custom names for every connector (like left / right).
 
 ## System Requirements
-OCPP.Core is written in .NET 8 and therefore runs on different plattforms. I also installed it in Azure for testing purposes.
-The storage is based on the EntityFramework-Core and supports different databases. The project contains script for SQL-Server (SQL-Express) and SQLite.
+OCPP.Core is written in .NET 8 and therefore runs on different platforms. I also installed it in Azure for testing purposes.
+The storage is based on the EntityFramework-Core and supports different databases. The project contains scripts for SQL-Server (SQL-Express) and SQLite.
 
 Referenced Packages:
 * Microsoft.EntityFrameworkCore
@@ -112,7 +112,7 @@ Create new chargepoint:
 
 ![NewChargePoint](images/NewChargePoint.png)
 
-Optionally, you can add authentication data for this chargepoint: Username/Passwort for basic authentication and/or a certificate thumbprint for a client certificate.
+Optionally, you can add authentication data for this chargepoint: Username/Password for basic authentication and/or a certificate thumbprint for a client certificate.
 When you're editing a chargepoint you can send restart or unlock commands to the chargepoint here.
 
 Create new charge tag:
@@ -138,5 +138,5 @@ Enter the charge tag ID you entered before as "Tag".
 
 Click "Connect"
 
-Now the simulator hopefully  show a success message at the bottom.
+Now the simulator hopefully shows a success message at the bottom.
 When you start a transaction and refresh the Web-UI you should see the corresponding status in the charge point tiles.

@@ -172,7 +172,9 @@ namespace OCPP.Core.Management.Controllers
                 csv.Append(DefaultCSVSeparator);
                 csv.Append(_localizer["StopMeter"]);
                 csv.Append(DefaultCSVSeparator);
-                csv.AppendLine(_localizer["Energy-kWh"]);
+                csv.Append(_localizer["Energy-kWh"]);
+                csv.Append(DefaultCSVSeparator);
+                csv.AppendLine(_localizer["Power-kW"]);
 
                 foreach (var ft in fullTransactions)
                 {
@@ -203,6 +205,8 @@ namespace OCPP.Core.Management.Controllers
                     csv.Append(ft.t.MeterStop);
                     csv.Append(DefaultCSVSeparator);
                     csv.Append(energy);
+                    csv.Append(DefaultCSVSeparator);
+                    csv.Append(CalculateAveragePowerKw(ft.t.MeterStart, ft.t.MeterStop, ft.t.StartTime, ft.t.StopTime));
                     csv.AppendLine();
                 }
 
@@ -252,6 +256,7 @@ namespace OCPP.Core.Management.Controllers
                 worksheet.Cell(1, 11).Value = _localizer["StopTime"].Value;
                 worksheet.Cell(1, 12).Value = _localizer["StopMeter"].Value;
                 worksheet.Cell(1, 13).Value = _localizer["Energy-kWh"].Value;
+                worksheet.Cell(1, 14).Value = _localizer["Power-kW"].Value;
 
                 var row = 2;
                 foreach (var ft in fullTransactions)
@@ -276,6 +281,7 @@ namespace OCPP.Core.Management.Controllers
                         worksheet.Cell(row, 12).SetValue(ft.t.MeterStop);
                     if (energy.HasValue)
                         worksheet.Cell(row, 13).SetValue(energy);
+                    worksheet.Cell(row, 14).SetValue(CalculateAveragePowerKw(ft.t.MeterStart, ft.t.MeterStop, ft.t.StartTime, ft.t.StopTime));
 
                     row++;
                 }
