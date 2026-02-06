@@ -34,6 +34,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using OCPP.Core.Database;
+using OCPP.Core.Management.Services;
 
 namespace OCPP.Core.Management
 {
@@ -77,6 +78,7 @@ namespace OCPP.Core.Management
             });
 
             services.AddScoped<IUserManager, UserManager>();
+            services.AddScoped<IChargeReportService, ChargeReportService>();
             services.AddDistributedMemoryCache();
         }
 

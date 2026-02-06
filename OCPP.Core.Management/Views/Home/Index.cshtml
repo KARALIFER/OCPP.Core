@@ -44,7 +44,7 @@
                 case ConnectorStatusEnum.Occupied:
                     cpIcon = "fa-bolt"; //"fa-car";
                     cpColor = "errorColor";
-                    cpTitle = Localizer["Charging"].Value;
+                    cpTitle = cpvm.IsOwnChargeSession ? Localizer["Charging"].Value : Localizer["Occupied"].Value;
                     break;
                 case ConnectorStatusEnum.Faulted:
                     cpIcon = "fa-times-circle";

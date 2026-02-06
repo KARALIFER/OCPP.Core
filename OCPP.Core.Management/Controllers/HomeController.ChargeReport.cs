@@ -4,12 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OCPP.Core.Management.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using OCPP.Core.Database;
 using ClosedXML.Excel;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
+using OCPP.Core.Management.Services;
 
 namespace OCPP.Core.Management.Controllers
 {
@@ -21,7 +20,10 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 Logger.LogTrace("ChargeReport: GenerateReport()...");
-                var report = GenerateReport(startDate, stopDate);
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
+                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
                 return View(report);
             }
             catch (Exception exp)
@@ -38,7 +40,10 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 Logger.LogTrace("ChargeReport: ChargeReportCsv()...");
-                var report = GenerateReport(startDate, stopDate);
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
+                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
                 var csv = new StringBuilder();
 
                 csv.Append(_localizer["ChargeReportGroup"]);
@@ -80,7 +85,10 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 Logger.LogTrace("ChargeReport: ChargeReportXslx()...");
-                var report = GenerateReport(startDate, stopDate);
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
+                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
                 using var workbook = new XLWorkbook();
                 var worksheet = workbook.Worksheets.Add(_localizer["ChargeReport"]);
 
@@ -126,7 +134,10 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 Logger.LogTrace("ChargeReport: AllTransactionsCsv()...");
-                var tlvm = GetAllTransactions(startDate, stopDate);
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
+                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var tlvm = _chargeReportService.GetTransactions(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
 
                 // Join transactions with chargepoints and connector names
                 var fullTransactions =
@@ -212,7 +223,10 @@ namespace OCPP.Core.Management.Controllers
             try
             {
                 Logger.LogTrace("ChargeReport: AllTransactionsXlsx()...");
-                var tlvm = GetAllTransactions(startDate, stopDate);
+                bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
+                HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var tlvm = _chargeReportService.GetTransactions(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
 
                 // Join transactions with chargepoints and connector names
                 var fullTransactions =
@@ -281,172 +295,5 @@ namespace OCPP.Core.Management.Controllers
             }
         }
 
-        private ChargeReportViewModel GenerateReport(DateTime? startDate, DateTime? stopDate)
-        {
-            Logger.LogTrace("ChargeReport: GenerateReport({0}, {1})", startDate?.ToString("s"), stopDate?.ToString("s"));
-
-            startDate ??= new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1); // Default to first day of previous month
-            stopDate ??= new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1); // Default to last day of previous month
-
-            // Restrict DateTime to date
-            startDate = startDate.Value.Date;
-            stopDate = stopDate.Value.Date;
-
-            // Timestamps in DB are UTC
-            DateTime dbStartDate = startDate.Value.ToUniversalTime();
-            // Stop date => use next day and compare with "<" (no clock times needed)
-            DateTime dbStopDate = stopDate.Value.AddDays(1).ToUniversalTime();
-            HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
-            HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-            bool hasAssignedChargeTag = permittedChargeTagIds == null || permittedChargeTagIds.Count > 0;
-
-            if (!hasAssignedChargeTag)
-            {
-                return new ChargeReportViewModel
-                {
-                    StartDate = startDate.Value,
-                    StopDate = stopDate.Value,
-                    HasAssignedChargeTag = false,
-                    Groups = new List<GroupReport>()
-                };
-            }
-
-            // Load transactions with LEFT JOIN charge tags
-            var transactions = (from t in DbContext.Transactions
-                                 join startCT in DbContext.ChargeTags on t.StartTagId equals startCT.TagId into ft_tmp
-                                 from startCT in ft_tmp.DefaultIfEmpty()
-                                 join stopCT in DbContext.ChargeTags on t.StopTagId equals stopCT.TagId into ft
-                                 from stopCT in ft.DefaultIfEmpty()
-                                 where (t.StartTime >= dbStartDate &&
-                                        t.StartTime <= dbStopDate &&
-                                        (!t.StopTime.HasValue || t.StopTime < dbStopDate) &&
-                                        (permittedChargePointIds == null || permittedChargePointIds.Contains(t.ChargePointId)) &&
-                                        (permittedChargeTagIds == null ||
-                                         permittedChargeTagIds.Contains(t.StartTagId) ||
-                                         permittedChargeTagIds.Contains(t.StopTagId)))
-                                 select new TransactionExtended
-                                 {
-                                     TransactionId = t.TransactionId,
-                                     Uid = t.Uid,
-                                     ChargePointId = t.ChargePointId,
-                                     ConnectorId = t.ConnectorId,
-                                     StartTagId = t.StartTagId,
-                                     StartTime = t.StartTime,
-                                     MeterStart = t.MeterStart,
-                                     StartResult = t.StartResult,
-                                     StopTagId = t.StopTagId,
-                                     StopTime = t.StopTime,
-                                     MeterStop = t.MeterStop,
-                                     StopReason = t.StopReason,
-                                     StartTagName = startCT.TagName,
-                                     StartTagParentId = startCT.ParentTagId,
-                                     StopTagName = stopCT.TagName,
-                                     StopTagParentId = stopCT.ParentTagId
-                                 }).AsNoTracking()
-                                   .ToList();
-
-            // generate and return grouped data
-            return new ChargeReportViewModel
-            {
-                StartDate = startDate.Value,
-                StopDate = stopDate.Value,
-                HasAssignedChargeTag = true,
-                Groups = transactions
-                    .GroupBy(t => t.StartTagParentId)
-                    .OrderBy(g => g.Key) // Order groups by name
-                    .Select(g => new GroupReport
-                    {
-                        GroupName = g.Key,
-                        Tags = g.GroupBy(t => (string.IsNullOrEmpty(t.StartTagName) ? t.StartTagId : t.StartTagName))
-                                .OrderBy(tg => tg.Key) // Order tags by name
-                                .Select(tg => new TagReport
-                                {
-                                    TagName = tg.Key,
-                                    Transactions = tg.Select(t => new TransactionReport
-                                    {
-                                        TransactionId = t.TransactionId,
-                                        ChargePointId = t.ChargePointId,
-                                        ConnectorId = t.ConnectorId,
-                                        StartTagId = string.IsNullOrEmpty(t.StartTagName) ? t.StartTagId : t.StartTagName,
-                                        StartTime = t.StartTime,
-                                        MeterStart = t.MeterStart,
-                                        StartResult = t.StartResult,
-                                        StopTagId = string.IsNullOrEmpty(t.StopTagName) ? t.StopTagId : t.StopTagName,
-                                        StopTime = t.StopTime,
-                                        MeterStop = t.MeterStop,
-                                        StopReason = t.StopReason
-                                    }).ToList()
-                                }).ToList()
-                    }).ToList()
-            };
-        }
-
-        private TransactionListViewModel GetAllTransactions(DateTime? startDate, DateTime? stopDate)
-        {
-            startDate ??= new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1); // Default to first day of previous month
-            stopDate ??= new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1); // Default to last day of previous month
-
-            // Restrict DateTime to date
-            startDate = startDate.Value.Date;
-            stopDate = stopDate.Value.Date;
-
-            // Timestamps in DB are UTC
-            DateTime dbStartDate = startDate.Value.ToUniversalTime();
-            // Stop date => use next day and compare with "<" (no clock times needed)
-            DateTime dbStopDate = stopDate.Value.AddDays(1).ToUniversalTime();
-            HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
-            HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-
-            var tlvm = new TransactionListViewModel
-            {
-                ConnectorStatuses = new List<ConnectorStatus>(),
-                Transactions = new List<TransactionExtended>()
-            };
-
-            Logger.LogTrace("ChargeReport: Loading charge points and connectors...");
-            tlvm.ConnectorStatuses = DbContext.ConnectorStatuses.Include(cs => cs.ChargePoint).ToList();
-            if (permittedChargePointIds != null)
-            {
-                tlvm.ConnectorStatuses = tlvm.ConnectorStatuses
-                    .Where(connector => permittedChargePointIds.Contains(connector.ChargePointId))
-                    .ToList();
-            }
-
-            Logger.LogTrace("ChargeReport: Loading transactions...");
-            tlvm.Transactions = (from t in DbContext.Transactions
-                                 join startCT in DbContext.ChargeTags on t.StartTagId equals startCT.TagId into ft_tmp
-                                 from startCT in ft_tmp.DefaultIfEmpty()
-                                 join stopCT in DbContext.ChargeTags on t.StopTagId equals stopCT.TagId into ft
-                                 from stopCT in ft.DefaultIfEmpty()
-                                 where (t.StartTime >= dbStartDate && 
-                                        t.StartTime <= dbStopDate && 
-                                        (!t.StopTime.HasValue || t.StopTime < dbStopDate) &&
-                                        (permittedChargePointIds == null || permittedChargePointIds.Contains(t.ChargePointId)) &&
-                                        (permittedChargeTagIds == null ||
-                                         permittedChargeTagIds.Contains(t.StartTagId) ||
-                                         permittedChargeTagIds.Contains(t.StopTagId)))
-                                 select new TransactionExtended
-                                 {
-                                     TransactionId = t.TransactionId,
-                                     Uid = t.Uid,
-                                     ChargePointId = t.ChargePointId,
-                                     ConnectorId = t.ConnectorId,
-                                     StartTagId = t.StartTagId,
-                                     StartTime = t.StartTime,
-                                     MeterStart = t.MeterStart,
-                                     StartResult = t.StartResult,
-                                     StopTagId = t.StopTagId,
-                                     StopTime = t.StopTime,
-                                     MeterStop = t.MeterStop,
-                                     StopReason = t.StopReason,
-                                     StartTagName = startCT.TagName,
-                                     StartTagParentId = startCT.ParentTagId,
-                                     StopTagName = stopCT.TagName,
-                                     StopTagParentId = stopCT.ParentTagId
-                                 }).AsNoTracking()
-                      .ToList();
-
-            return tlvm;
-        }
     }
 }

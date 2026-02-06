@@ -85,5 +85,10 @@ namespace OCPP.Core.Management.Models
         /// Details about the current charge process
         /// </summary>
         public string CurrentChargeData { get; set; }
+
+        /// <summary>
+        /// True when the current charge session belongs to the logged-in user
+        /// </summary>
+        public bool IsOwnChargeSession { get; set; }
     }
 }

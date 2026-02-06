@@ -124,7 +124,7 @@
     <value>Charge points</value>
   </data>
   <data name="ChargeReport" xml:space="preserve">
-    <value>Charge Report</value>
+    <value>Charging Report</value>
   </data>
   <data name="ChargeTags" xml:space="preserve">
     <value>RFID-Tags</value>
@@ -133,7 +133,7 @@
     <value>Connectors</value>
   </data>
   <data name="MyChargeTags" xml:space="preserve">
-    <value>My RFID-Tags</value>
+    <value>My RFID Cards</value>
   </data>
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>

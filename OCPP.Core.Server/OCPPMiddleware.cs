@@ -739,20 +739,82 @@ namespace OCPP.Core.Server
         /// </summary>
         private void DumpMessage(string nameSuffix, string message)
         {
-            string dumpDir = _configuration.GetValue<string>("MessageDumpDir");
-            if (!string.IsNullOrWhiteSpace(dumpDir))
+            string dumpDir = ResolveMessageDumpDirectory();
+            if (string.IsNullOrWhiteSpace(dumpDir))
             {
-                string path = Path.Combine(dumpDir, string.Format("{0}_{1}.txt", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), nameSuffix));
+                return;
+            }
+
+            string path = Path.Combine(dumpDir, string.Format("{0}_{1}.txt", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), nameSuffix));
+            try
+            {
+                Directory.CreateDirectory(dumpDir);
+                // Write incoming message into dump directory
+                File.WriteAllText(path, message);
+            }
+            catch (Exception exp)
+            {
+                _logger.LogError(exp, "OCPPMiddleware.DumpMessage => Error dumping message '{0}' to path: '{1}'", nameSuffix, path);
+            }
+        }
+
+        private string ResolveMessageDumpDirectory()
+        {
+            string configuredDumpDir = _configuration.GetValue<string>("OCPP:DumpDirectory");
+            if (string.IsNullOrWhiteSpace(configuredDumpDir))
+            {
+                configuredDumpDir = _configuration.GetValue<string>("MessageDumpDir");
+            }
+
+            string dumpDir = null;
+            if (!string.IsNullOrWhiteSpace(configuredDumpDir) && IsConfiguredDumpDirValid(configuredDumpDir))
+            {
+                dumpDir = configuredDumpDir;
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                dumpDir = @"C:\temp\OCPP";
+            }
+            else
+            {
+                dumpDir = Path.Combine(Path.GetTempPath(), "OCPP");
+            }
+
+            try
+            {
+                Directory.CreateDirectory(dumpDir);
+                return dumpDir;
+            }
+            catch (Exception exp)
+            {
+                _logger.LogError(exp, "OCPPMiddleware.DumpMessage => Error creating dump directory '{0}'", dumpDir);
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                string fallback = Path.Combine(Path.GetTempPath(), "OCPP");
                 try
                 {
-                    // Write incoming message into dump directory
-                    File.WriteAllText(path, message);
+                    Directory.CreateDirectory(fallback);
+                    return fallback;
                 }
                 catch (Exception exp)
                 {
-                    _logger.LogError(exp, "OCPPMiddleware.DumpMessage => Error dumping message '{0}' to path: '{1}'", nameSuffix, path);
+                    _logger.LogError(exp, "OCPPMiddleware.DumpMessage => Error creating fallback dump directory '{0}'", fallback);
                 }
             }
+
+            return null;
+        }
+
+        private static bool IsConfiguredDumpDirValid(string configuredDumpDir)
+        {
+            if (!OperatingSystem.IsWindows() && configuredDumpDir.Length >= 2 && char.IsLetter(configuredDumpDir[0]) && configuredDumpDir[1] == ':')
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 
