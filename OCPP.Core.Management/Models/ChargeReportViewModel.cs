@@ -36,6 +36,7 @@ namespace OCPP.Core.Management.Models
         public DateTime? StopTime { get; set; }
         public double? MeterStop { get; set; }
         public string StopReason { get; set; }
+        public double? AveragePowerKw { get; set; }
         public double? Energy => MeterStop.HasValue ? MeterStop.Value - MeterStart : (double?)null;
     }
 }

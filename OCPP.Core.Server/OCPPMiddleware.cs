@@ -771,13 +771,17 @@ namespace OCPP.Core.Server
             {
                 dumpDir = configuredDumpDir;
             }
+            else if (!string.IsNullOrWhiteSpace(configuredDumpDir))
+            {
+                _logger.LogWarning("OCPPMiddleware.DumpMessage => Ignoring invalid dump directory '{0}'", configuredDumpDir);
+            }
             else if (OperatingSystem.IsWindows())
             {
                 dumpDir = @"C:\temp\OCPP";
             }
             else
             {
-                dumpDir = Path.Combine(Path.GetTempPath(), "OCPP");
+                dumpDir = Path.Combine(Path.GetTempPath(), "ocpp");
             }
 
             try
@@ -792,7 +796,20 @@ namespace OCPP.Core.Server
 
             if (OperatingSystem.IsWindows())
             {
-                string fallback = Path.Combine(Path.GetTempPath(), "OCPP");
+                string fallback = Path.Combine(Path.GetTempPath(), "ocpp");
+                try
+                {
+                    Directory.CreateDirectory(fallback);
+                    return fallback;
+                }
+                catch (Exception exp)
+                {
+                    _logger.LogError(exp, "OCPPMiddleware.DumpMessage => Error creating fallback dump directory '{0}'", fallback);
+                }
+            }
+            else
+            {
+                string fallback = Path.Combine(Directory.GetCurrentDirectory(), "temp", "ocpp");
                 try
                 {
                     Directory.CreateDirectory(fallback);

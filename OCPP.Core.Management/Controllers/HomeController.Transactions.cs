@@ -177,6 +177,15 @@ namespace OCPP.Core.Management.Controllers
                                          .OrderByDescending(t => t.TransactionId)
                                          .AsNoTracking()
                                          .ToList();
+
+                    foreach (TransactionExtended transaction in tlvm.Transactions)
+                    {
+                        transaction.AveragePowerKw = CalculateAveragePowerKw(
+                            transaction.MeterStart,
+                            transaction.MeterStop,
+                            transaction.StartTime,
+                            transaction.StopTime);
+                    }
                 }
             }
             catch (Exception exp)
