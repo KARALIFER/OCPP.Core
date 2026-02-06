@@ -19,10 +19,10 @@ namespace OCPP.Core.Management.Services
             _logger = logger;
         }
 
-        public ChargeReportViewModel GenerateReport(DateTime? startDate, DateTime? stopDate, HashSet<string> permittedChargeTagIds, bool isAdmin)
+        public ChargeReportViewModel GenerateReport(DateTime? startDate, DateTime? stopDate, HashSet<string> permittedChargeTagIds, HashSet<string> permittedChargePointIds, bool isAdmin)
         {
             LoggerTrace("GenerateReport", startDate, stopDate);
-            var range = ResolveDateRange(startDate, stopDate, permittedChargeTagIds, isAdmin);
+            var range = ResolveDateRange(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
 
             bool hasAssignedChargeTag = permittedChargeTagIds == null || permittedChargeTagIds.Count > 0;
             if (!hasAssignedChargeTag)
@@ -40,6 +40,10 @@ namespace OCPP.Core.Management.Services
             DateTime dbStopDate = range.StopDate.AddDays(1).ToUniversalTime();
 
             var transactionQuery = _dbContext.Transactions.AsQueryable();
+            if (!isAdmin && permittedChargePointIds != null)
+            {
+                transactionQuery = transactionQuery.Where(t => permittedChargePointIds.Contains(t.ChargePointId));
+            }
             if (!isAdmin || (permittedChargeTagIds != null && permittedChargeTagIds.Count > 0))
             {
                 transactionQuery = transactionQuery.Where(t =>
@@ -113,7 +117,7 @@ namespace OCPP.Core.Management.Services
 
         public TransactionListViewModel GetTransactions(DateTime? startDate, DateTime? stopDate, HashSet<string> permittedChargeTagIds, HashSet<string> permittedChargePointIds, bool isAdmin)
         {
-            var range = ResolveDateRange(startDate, stopDate, permittedChargeTagIds, isAdmin);
+            var range = ResolveDateRange(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
             DateTime dbStartDate = range.StartDate.ToUniversalTime();
             DateTime dbStopDate = range.StopDate.AddDays(1).ToUniversalTime();
 
@@ -125,7 +129,7 @@ namespace OCPP.Core.Management.Services
 
             _logger.LogTrace("ChargeReport: Loading charge points and connectors...");
             tlvm.ConnectorStatuses = _dbContext.ConnectorStatuses.Include(cs => cs.ChargePoint).ToList();
-            if (permittedChargePointIds != null && isAdmin)
+            if (permittedChargePointIds != null && !isAdmin)
             {
                 tlvm.ConnectorStatuses = tlvm.ConnectorStatuses
                     .Where(connector => permittedChargePointIds.Contains(connector.ChargePointId))
@@ -133,7 +137,7 @@ namespace OCPP.Core.Management.Services
             }
 
             var transactionQuery = _dbContext.Transactions.AsQueryable();
-            if (permittedChargePointIds != null && isAdmin)
+            if (permittedChargePointIds != null && !isAdmin)
             {
                 transactionQuery = transactionQuery.Where(t => permittedChargePointIds.Contains(t.ChargePointId));
             }
@@ -178,7 +182,7 @@ namespace OCPP.Core.Management.Services
             return tlvm;
         }
 
-        private (DateTime StartDate, DateTime StopDate) ResolveDateRange(DateTime? startDate, DateTime? stopDate, HashSet<string> permittedChargeTagIds, bool isAdmin)
+        private (DateTime StartDate, DateTime StopDate) ResolveDateRange(DateTime? startDate, DateTime? stopDate, HashSet<string> permittedChargeTagIds, HashSet<string> permittedChargePointIds, bool isAdmin)
         {
             if (!startDate.HasValue || !stopDate.HasValue)
             {
@@ -186,6 +190,10 @@ namespace OCPP.Core.Management.Services
                 {
                     var tagScopedQuery = _dbContext.Transactions
                         .Where(t => permittedChargeTagIds.Contains(t.StartTagId) || permittedChargeTagIds.Contains(t.StopTagId));
+                    if (permittedChargePointIds != null)
+                    {
+                        tagScopedQuery = tagScopedQuery.Where(t => permittedChargePointIds.Contains(t.ChargePointId));
+                    }
 
                     DateTime? minStart = tagScopedQuery.Min(t => (DateTime?)t.StartTime);
                     DateTime? maxEnd = tagScopedQuery.Max(t => (DateTime?)(t.StopTime ?? t.StartTime));

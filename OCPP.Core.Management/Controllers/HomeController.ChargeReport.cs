@@ -22,7 +22,8 @@ namespace OCPP.Core.Management.Controllers
                 Logger.LogTrace("ChargeReport: GenerateReport()...");
                 bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, isAdmin);
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
                 return View(report);
             }
             catch (Exception exp)
@@ -41,7 +42,8 @@ namespace OCPP.Core.Management.Controllers
                 Logger.LogTrace("ChargeReport: ChargeReportCsv()...");
                 bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, isAdmin);
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
                 var csv = new StringBuilder();
 
                 csv.Append(_localizer["ChargeReportGroup"]);
@@ -85,7 +87,8 @@ namespace OCPP.Core.Management.Controllers
                 Logger.LogTrace("ChargeReport: ChargeReportXslx()...");
                 bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, isAdmin);
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
+                var report = _chargeReportService.GenerateReport(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
                 using var workbook = new XLWorkbook();
                 var worksheet = workbook.Worksheets.Add(_localizer["ChargeReport"]);
 
@@ -133,7 +136,7 @@ namespace OCPP.Core.Management.Controllers
                 Logger.LogTrace("ChargeReport: AllTransactionsCsv()...");
                 bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-                HashSet<string> permittedChargePointIds = isAdmin ? GetPermittedChargePointIds() : null;
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
                 var tlvm = _chargeReportService.GetTransactions(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
 
                 // Join transactions with chargepoints and connector names
@@ -222,7 +225,7 @@ namespace OCPP.Core.Management.Controllers
                 Logger.LogTrace("ChargeReport: AllTransactionsXlsx()...");
                 bool isAdmin = User != null && User.IsInRole(Constants.AdminRoleName);
                 HashSet<string> permittedChargeTagIds = GetPermittedChargeTagIds();
-                HashSet<string> permittedChargePointIds = isAdmin ? GetPermittedChargePointIds() : null;
+                HashSet<string> permittedChargePointIds = GetPermittedChargePointIds();
                 var tlvm = _chargeReportService.GetTransactions(startDate, stopDate, permittedChargeTagIds, permittedChargePointIds, isAdmin);
 
                 // Join transactions with chargepoints and connector names
